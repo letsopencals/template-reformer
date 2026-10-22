@@ -6,6 +6,8 @@ import { AnimatedNumber } from '@/components/ui/animated-number';
 import { formatPrice } from '@/lib/format';
 import type { CartWithDiscounts } from '@/types/discount';
 import { cartSubtotal } from './cart-line';
+import { Tag } from '@/components/ui/chip';
+import { isAutomatic } from '@/lib/discount-state';
 
 interface CartTotalsProps {
 	cart: CartWithDiscounts;
@@ -21,7 +23,7 @@ export function useCentsFormatter(currency: string | undefined) {
 
 const toCents = (n: number) => Math.round(n * 100);
 
-/** Subtotal, applied discounts, optional tax and a live-tweening total. */
+/** Subtotal, applied discounts (automatic intro/off-peak offers tagged), optional tax and a live-tweening total. */
 export function CartTotals({ cart, showTax = false, className }: CartTotalsProps) {
 	const currency = cart.paymentCurrencyCode;
 	const format = useCentsFormatter(currency);
@@ -39,7 +41,10 @@ export function CartTotals({ cart, showTax = false, className }: CartTotalsProps
 			</div>
 			{discounts.map((d) => (
 				<div key={d.id} className="flex items-baseline justify-between gap-4">
-					<dt className="min-w-0 truncate text-ink">{d.title}</dt>
+					<dt className="flex min-w-0 items-baseline gap-2 text-ink">
+						<span className="truncate">{d.title}</span>
+						{isAutomatic(d) ? <Tag tone="neutral">Automatic</Tag> : <Tag tone="outline">{d.code}</Tag>}
+					</dt>
 					<dd className="tabular text-ink">−{formatPrice(d.totalAmount, currency)}</dd>
 				</div>
 			))}

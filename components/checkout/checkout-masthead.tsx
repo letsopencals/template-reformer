@@ -12,17 +12,17 @@ const FADE_ANIMATE = { opacity: 1, y: 0 };
 const TITLE_TRANSITION: Transition = { duration: DURATION.slow, ease: EASE_OUT, delay: 0.1 };
 const META_TRANSITION: Transition = { duration: DURATION.base, ease: EASE_OUT, delay: 0.35 };
 
-/** "Nº 04 — Checkout" masthead. */
+/** Checkout masthead: "Hold your bed", with the way back to the timetable. */
 export function CheckoutMasthead() {
 	const reduce = useReducedMotion();
 	return (
 		<header className="border-b border-line pb-8 sm:pb-10">
 			<div className="flex items-baseline justify-between gap-6">
 				<p className="eyebrow text-graphite">
-					<span className="tabular text-steel">Nº 04</span> — Checkout
+					Checkout
 				</p>
 				<Link href="/timetable" className="eyebrow link-underline text-graphite hover:text-ink">
-					<span aria-hidden>← </span>The Menu
+					<span aria-hidden>← </span>Timetable
 				</Link>
 			</div>
 			<h1 className="display-lg mt-6 overflow-hidden pb-[0.08em] text-ink">
@@ -41,7 +41,7 @@ export function CheckoutMasthead() {
 				animate={FADE_ANIMATE}
 				transition={META_TRANSITION}
 			>
-				A few short steps. Your times are held while you finish — extend the hold if you need a moment longer.
+				Your details, a few questions for your teacher, then payment. The bed is yours while the hold runs; extend it if you need longer.
 			</motion.p>
 		</header>
 	);

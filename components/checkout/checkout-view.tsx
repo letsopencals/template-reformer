@@ -6,16 +6,18 @@ import { useCheckout, type CheckoutStep } from '@/contexts/checkout-context';
 import { useSmoothScroll } from '@/components/motion/smooth-scroll';
 import { EmptyCard } from '@/components/cart/empty-card';
 import { formatPrice } from '@/lib/format';
+import { CarriageRail } from '@/components/motifs/carriage-rail';
 import { CheckoutMasthead } from './checkout-masthead';
 import { CheckoutSection, type SectionState } from './checkout-section';
 import { CustomerStep } from './customer-step';
 import { QuestionsStep } from './questions-step';
-import { PaymentMethods, methodActionLabel } from './payment-methods';
+import { PaymentMethods } from './payment-methods';
 import { PaymentStep } from './payment-step';
 import { OrderStack } from './order-stack';
 import { MobileSummary } from './mobile-summary';
-import { PayBar, type PrimaryAction } from './pay-bar';
-import { DETAILS_FORM_ID, PAYMENT_METHOD_FORM_ID, QUESTIONS_FORM_ID, STRIPE_FORM_ID } from './form-ids';
+import { PayBar } from './pay-bar';
+import { primaryAction } from './primary-action';
+import { CheckoutSkeleton } from './checkout-skeleton';
 
 const SECTION_IDS = { details: 'checkout-step-details', questions: 'checkout-step-questions', payment: 'checkout-step-payment' };
 
@@ -45,7 +47,9 @@ export function CheckoutView() {
 		return (
 			<CheckoutShell>
 				<div className="flex min-h-[40vh] flex-col items-center justify-center text-center" role="status">
-					<span className="h-px w-16 origin-left animate-pulse bg-ink" aria-hidden />
+					<span className="block w-40" aria-hidden>
+						<CarriageRail value={1} />
+					</span>
 					<p className="display-sm mt-6 text-ink">
 						Holding your <em>bed</em>…
 					</p>
@@ -76,7 +80,7 @@ export function CheckoutView() {
 
 function CheckoutShell({ children }: { children: React.ReactNode }) {
 	return (
-		<section className="bg-paper pt-28 pb-24 sm:pt-32 lg:pt-40">
+		<section className="pt-28 pb-24 sm:pt-32 lg:pt-40">
 			<div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
 				<CheckoutMasthead />
 				{children}
@@ -147,7 +151,7 @@ function CheckoutBody() {
 	});
 
 	return (
-		<section className="bg-paper pt-28 pb-32 sm:pt-32 lg:pt-40 lg:pb-28">
+		<section className="pt-28 pb-32 sm:pt-32 lg:pt-40 lg:pb-28">
 			<div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-12">
 				<CheckoutMasthead />
 
@@ -156,12 +160,12 @@ function CheckoutBody() {
 						<MobileSummary />
 
 						{error ? (
-							<div role="alert" className="mt-8 flex items-start gap-4 border-l-2 border-red-700 bg-red-50/70 px-5 py-4 text-sm text-red-800">
+							<div role="alert" className="mt-8 flex items-start gap-4 border-l-2 border-spring-red bg-spring-red-soft/60 px-5 py-4 text-sm text-ink">
 								<p className="flex-1">{error}</p>
 								<button
 									type="button"
 									onClick={() => setError(null)}
-									className="eyebrow shrink-0 text-[0.6rem] text-red-800 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ink"
+									className="eyebrow shrink-0 text-[0.6rem] text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ink"
 								>
 									Dismiss
 								</button>
@@ -187,7 +191,7 @@ function CheckoutBody() {
 									title="A few questions"
 									state={sectionState(current, 1)}
 									summary={`${answered} of ${questions.length} answered`}
-									lockedHint="So your teacher can set up your bed."
+									lockedHint="So your teacher can set your springs."
 									onEdit={submitting ? undefined : () => setStep('questions')}
 								>
 									<QuestionsStep />
@@ -199,7 +203,7 @@ function CheckoutBody() {
 								index={paymentIndex}
 								title="Payment"
 								state={current === 2 ? 'open' : 'locked'}
-								lockedHint="Card, or pay at the studio where offered."
+								lockedHint="Card now, or pay at the studio where it’s offered."
 							>
 								{step === 'payment' ? (
 									<PaymentStep payLabel={total} onProcessingChange={setStripeProcessing} />
@@ -208,11 +212,11 @@ function CheckoutBody() {
 								)}
 							</CheckoutSection>
 
-<div className="border-t border-line" aria-hidden />
+							<div className="border-t border-line" aria-hidden />
 						</div>
 					</div>
 
-					<aside aria-label="Your appointments" className="hidden lg:col-span-5 lg:block">
+					<aside aria-label="Your classes" className="hidden lg:col-span-5 lg:block">
 						<div className="sticky top-28 pt-10">
 							<OrderStack />
 						</div>
@@ -222,62 +226,5 @@ function CheckoutBody() {
 
 			<PayBar total={total} action={action} />
 		</section>
-	);
-}
-
-interface ActionInput {
-	step: CheckoutStep;
-	submitting: boolean;
-	isExpired: boolean;
-	hasEmail: boolean;
-	hasProviders: boolean;
-	method: string | undefined;
-	selectedProvider: string | null;
-	stripeProcessing: boolean;
-	total: string;
-	onConfirmCash: () => void;
-}
-
-/** What the mobile pay bar does at each step — mirrors the section's own submit button. */
-function primaryAction(i: ActionInput): PrimaryAction | null {
-	const blocked = i.submitting || i.isExpired;
-	switch (i.step) {
-		case 'customer':
-			return { label: i.submitting ? 'Saving…' : 'Continue', form: DETAILS_FORM_ID, disabled: blocked || !i.hasEmail, busy: i.submitting };
-		case 'questions':
-			return { label: i.submitting ? 'Saving…' : 'Continue', form: QUESTIONS_FORM_ID, disabled: blocked, busy: i.submitting };
-		case 'payment-select':
-			if (!i.hasProviders) return null;
-			return {
-				label: i.submitting ? 'One moment…' : methodActionLabel(i.method),
-				form: PAYMENT_METHOD_FORM_ID,
-				disabled: blocked || !i.method,
-				busy: i.submitting,
-			};
-		case 'payment':
-			if (i.selectedProvider === 'stripe') {
-				const busy = i.stripeProcessing || i.submitting;
-				return { label: busy ? 'Processing…' : `Pay ${i.total}`, form: STRIPE_FORM_ID, disabled: busy || i.isExpired, busy };
-			}
-			if (i.selectedProvider === 'cash') {
-				return { label: i.submitting ? 'Confirming…' : 'Confirm booking', onClick: i.onConfirmCash, disabled: blocked, busy: i.submitting };
-			}
-			return null;
-	}
-}
-
-function CheckoutSkeleton() {
-	return (
-		<div className="mt-10 grid gap-16 lg:grid-cols-12" aria-busy="true" aria-label="Loading your card">
-			<div className="space-y-6 lg:col-span-7">
-				<div className="image-placeholder h-8 w-2/3" />
-				<div className="image-placeholder h-12" />
-				<div className="image-placeholder h-12" />
-				<div className="image-placeholder h-8 w-1/2" />
-			</div>
-			<div className="hidden lg:col-span-5 lg:block">
-				<div className="image-placeholder h-64" />
-			</div>
-		</div>
 	);
 }

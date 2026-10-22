@@ -166,12 +166,34 @@ pipeline. Page agents own their route folders and `components/<area>/*`
 - Level path: `levelPath(countCompleted(appointments))` in `lib/level-path.ts`.
   Guidance only; it never blocks booking.
 
+### Timetable URLs and the class-sheet deep link (P2 contract)
+Build links with `timetableHref()` from `lib/timetable-url.ts` (pure, safe in
+RSC and client) rather than hand-writing query strings.
+- `/timetable?studio=<studioKey>` (`mitte`, `kreuzberg`, `prenzlauer-berg`,
+  `online`), `class=<classKey>` (`flow`), `level=<levelOrder 0–3>`,
+  `instructor=<staff slug>` (`lena-hoffmann`), `time=morning|midday|evening`,
+  `day=YYYY-MM-DD` (Berlin date: the selected day on mobile, its week on
+  desktop). All optional; unknown values are ignored.
+- **Open a class sheet:** `occ=<seriesSlug>@<startISO>`, e.g.
+  `/timetable?occ=flow-mitte-lena@2026-10-27T17:30:00.000Z` (`start` is
+  `Occurrence.start`, UTC). `timetableHref({ occ: occurrence })` builds it and
+  also sets `day`. If the occurrence is gone (past or no longer listed) the
+  page ignores `occ` and shows that day.
+- Shared rows for other pages: `components/timetable/occurrence-row.tsx`
+  (`<OccurrenceRow occurrence next? instructorName? href? showDate? scroll? />`,
+  a Server-Component-safe `<li>`: wrap rows in a `<ul>`; links to the deep link
+  by default and scrolls to the top unless `onOpen` is passed).
+
 ### Booking, cart and checkout
 - Add a class to the cart: `POST /api/book` with `{ slot: { productId,
   fromDate, fromTime, toDate, toTime, staffMemberId, locationId },
   numberOfAttendees, addOns, people? }` and the `X-Cart-Id` header; then
   `setCart(data.cart)` from `useCart()`. Slots are UTC
   (`Occurrence.start/end` → `YYYY-MM-DD` / `HH:mm:ss`).
+- The class sheet (`components/class-sheet/`) books in place: extras, price
+  preview and policy, then `POST /api/book`, a short "Bed held" carriage-rail
+  beat, and a hand-over to `/checkout` (DESIGN §9's "becomes checkout" is this
+  hand-over, not an in-sheet payment flow).
 - Checkout is `/checkout` (ported from HAAR): `CheckoutProvider` +
   `components/checkout/*`: customer → questions (incl. the required waiver
   checkbox) → payment (Stripe or pay at the studio). Discount codes go

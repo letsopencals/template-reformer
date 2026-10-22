@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
 import { useCheckout } from '@/contexts/checkout-context';
 import { Button } from '@/components/ui/button';
+import { Tag } from '@/components/ui/chip';
 import { PAYMENT_METHOD_FORM_ID } from './form-ids';
 
 /** Primary-action label for a chosen provider (used here and by the mobile pay bar). */
@@ -13,9 +14,9 @@ export function methodActionLabel(name: string | undefined): string {
 		case 'stripe':
 			return 'Continue to card';
 		case 'cash':
-			return 'Confirm — pay at the studio';
+			return 'Confirm, pay at the studio';
 		case 'bank_transfer':
-			return 'Confirm — pay by transfer';
+			return 'Confirm, pay by transfer';
 		case 'no_payment_required':
 			return 'Confirm booking';
 		default:
@@ -42,7 +43,7 @@ export function PaymentMethods({ method, onMethodChange }: PaymentMethodsProps) 
 	};
 
 	if (providers.length === 0) {
-		return <p className="text-sm text-graphite">No payment methods are available right now. Please call the studio to book.</p>;
+		return <p className="text-sm text-graphite">Online payment isn&rsquo;t open right now. Call the studio and we&rsquo;ll hold your bed by phone.</p>;
 	}
 
 	return (
@@ -84,7 +85,7 @@ function MethodCard({ provider, index, checked, disabled, onSelect }: MethodCard
 		<label
 			htmlFor={id}
 			className={clsx(
-				'group relative flex cursor-pointer items-start gap-4 border bg-paper p-5 transition-[border-color,background-color,box-shadow] duration-300 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink',
+				'group relative flex cursor-pointer items-start gap-4 rounded-[4px] border bg-paper p-5 transition-[border-color,background-color,box-shadow] duration-300 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink',
 				checked ? 'border-ink shadow-card' : 'border-line hover:border-line-strong',
 				disabled && 'cursor-not-allowed opacity-60',
 			)}
@@ -102,18 +103,18 @@ function MethodCard({ provider, index, checked, disabled, onSelect }: MethodCard
 			<span
 				aria-hidden
 				className={clsx(
-					'mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors',
+					'mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-[2px] border transition-colors',
 					checked ? 'border-ink' : 'border-ink/30',
 				)}
 			>
-				<span className={clsx('h-2 w-2 rounded-full bg-ink transition-transform duration-300', checked ? 'scale-100' : 'scale-0')} />
+				<span className={clsx('h-2 w-2 rounded-[1px] bg-ink transition-transform duration-300 ease-[var(--ease-carriage)]', checked ? 'scale-100' : 'scale-0')} />
 			</span>
 			<span className="min-w-0 flex-1">
 				<span className="flex items-baseline gap-3">
 					<span className="tabular text-[0.7rem] text-steel">{String.fromCharCode(97 + index)}.</span>
-					<span className="font-display text-[1.3rem] leading-tight text-ink">{customerTitle(provider.name) ?? provider.displayName}</span>
+					<span className="headline text-[1.2rem] leading-tight text-ink">{customerTitle(provider.name) ?? provider.displayName}</span>
 					{provider.mode === 'test' ? (
-						<span className="eyebrow ml-auto border border-amber-300 px-1.5 py-0.5 text-[0.55rem] text-amber-700">Test</span>
+						<Tag tone="yellow" className="ml-auto">Test mode</Tag>
 					) : null}
 				</span>
 				<span className="mt-1.5 block text-sm leading-relaxed text-graphite">{customerCopy(provider.name) ?? provider.description}</span>
@@ -143,9 +144,9 @@ function customerTitle(name: string): string | undefined {
 function customerCopy(name: string): string | undefined {
 	switch (name) {
 		case 'stripe':
-			return 'Card, Apple Pay or Google Pay — paid securely now.';
+			return 'Card, Apple Pay or Google Pay, paid now.';
 		case 'cash':
-			return 'Hold your bed now and pay at the front desk before class.';
+			return 'Your bed is held now; pay at the front desk when you arrive.';
 		case 'bank_transfer':
 			return 'We’ll email the transfer details with your confirmation.';
 		default:

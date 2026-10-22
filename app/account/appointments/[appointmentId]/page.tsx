@@ -1,11 +1,16 @@
-import { StubPage } from '@/components/layout/stub-page';
+import { AppointmentDetailView, type DetailAction } from '@/components/account/appointment-detail/appointment-detail-view';
 
 export const dynamic = 'force-dynamic';
 
 type Params = Promise<{ appointmentId: string }>;
+type Search = Promise<{ action?: string | string[] }>;
 
-// TODO(P5 account): booking detail. Magic links land here (`?action=cancel|reschedule|feedback`).
-export default async function AppointmentPage({ params }: { params: Params }) {
-	const { appointmentId } = await params;
-	return <StubPage eyebrow={`Booking ${appointmentId.slice(0, 8)}`} title="Your booking" owner="P5 account + confirmation" />;
+const ACTIONS: readonly DetailAction[] = ['cancel', 'reschedule', 'feedback'];
+
+/** One booking as its check-in pass. Magic links land here with `?action=cancel|reschedule|feedback`. */
+export default async function AppointmentPage({ params, searchParams }: { params: Params; searchParams: Search }) {
+	const [{ appointmentId }, query] = await Promise.all([params, searchParams]);
+	const raw = Array.isArray(query.action) ? query.action[0] : query.action;
+	const action = ACTIONS.find((a) => a === raw) ?? null;
+	return <AppointmentDetailView id={appointmentId} initialAction={action} />;
 }

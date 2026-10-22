@@ -61,6 +61,8 @@ export interface StudioMeta {
 	rooms: RoomMeta[];
 	images: string[];
 	online?: boolean;
+	/** What's in the building (studio pages). Optional; hidden when empty. */
+	amenities?: string[];
 }
 
 export interface InstructorMeta {
@@ -86,12 +88,18 @@ export interface ClassMeta {
 	prerequisite: string | null;
 	/** Room key per studio key, e.g. `{ mitte: 'long-room' }`. */
 	rooms: Record<string, string>;
+	/** Who the class suits, one or two sentences (class pages). Optional. */
+	audience?: string;
 }
 
 export interface WorkshopMeta {
 	spring: Spring;
 	tagline: string;
 	whatToBring: string[];
+	/** Long editorial description for the workshops page (falls back to the product description). */
+	description?: string;
+	/** Room key at the workshop's studio (`long-room`); workshops have no class key to resolve it from. */
+	room?: string;
 }
 
 export interface LevelStep {
@@ -164,11 +172,13 @@ export const siteConfig = {
 	joinWindowMinutes: 10,
 
 	/** Off-peak window: class START, local time, both ends inclusive (matches the automatic Off-peak discount). */
-	offPeak: { weekdays: [1, 2, 3, 4, 5], from: '10:00', to: '16:00', label: 'Off-peak', discountLabel: '20% off midday classes' },
+	offPeak: { weekdays: [1, 2, 3, 4, 5], from: '10:00', to: '16:00', label: 'Off-peak', discountLabel: '20% off midday classes', percent: 20 },
 
 	/** Intro offer copy (the discount itself is automatic, applied at checkout). */
 	introOffer: {
 		title: 'Intro offer',
+		/** Price preview only (the automatic discount is the truth). Group classes, first order. */
+		percent: 30,
 		headline: '30% off your first order',
 		body: 'New to Tensile? Your first booking is 30% off, applied automatically at checkout. Start with Foundations.',
 	},
@@ -203,6 +213,7 @@ export const siteConfig = {
 				{ key: 'private-room', name: 'Private Room', equipment: 'reformer', beds: 2, layout: { rows: 1, cols: 2 }, private: true },
 			],
 			images: ['/images/studios/mitte-1.jpg', '/images/studios/mitte-2.jpg'],
+			amenities: ['Two showers', 'Lockers with your own code', 'Towels on request', 'Grip socks at the desk', 'Bike racks in the courtyard'],
 		},
 		'tensile-kreuzberg': {
 			key: 'kreuzberg',
@@ -219,6 +230,7 @@ export const siteConfig = {
 				{ key: 'private-room', name: 'Private Room', equipment: 'reformer', beds: 2, layout: { rows: 1, cols: 2 }, private: true },
 			],
 			images: ['/images/studios/kreuzberg-1.jpg', '/images/studios/kreuzberg-2.jpg'],
+			amenities: ['Showers', 'Lockers', 'Pram parking', 'Canal-side bench for after', 'Grip socks at the desk'],
 		},
 		'tensile-prenzlauer-berg': {
 			key: 'prenzlauer-berg',
@@ -234,6 +246,7 @@ export const siteConfig = {
 				{ key: 'private-room', name: 'Private Room', equipment: 'reformer', beds: 2, layout: { rows: 1, cols: 2 }, private: true },
 			],
 			images: ['/images/studios/prenzlauer-berg-1.jpg', '/images/studios/prenzlauer-berg-2.jpg'],
+			amenities: ['One shower', 'Lockers', 'Step-free entrance from the courtyard', 'Grip socks at the desk'],
 		},
 		'tensile-at-home': {
 			key: 'online',
@@ -314,6 +327,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks (or buy a pair at the desk)', 'Water', 'Arrive 10 minutes early for a set-up'],
 			prerequisite: null,
 			rooms: { mitte: 'long-room', kreuzberg: 'canal-room', 'prenzlauer-berg': 'courtyard-room' },
+			audience: 'Anyone new to the reformer, or back after a long break. Strong people welcome: the springs are new to everyone.',
 		},
 		flow: {
 			short: 'Flow',
@@ -324,6 +338,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water'],
 			prerequisite: 'One Foundations class first, or reformer experience elsewhere.',
 			rooms: { mitte: 'long-room', kreuzberg: 'canal-room', 'prenzlauer-berg': 'courtyard-room' },
+			audience: 'You know the footbar from the straps and want a full-body class two or three times a week.',
 		},
 		sculpt: {
 			short: 'Sculpt',
@@ -334,6 +349,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water', 'A towel'],
 			prerequisite: 'Around ten Flow classes first.',
 			rooms: { mitte: 'long-room', kreuzberg: 'canal-room', 'prenzlauer-berg': 'courtyard-room' },
+			audience: 'Regulars who move cleanly in Flow and want more load, longer holds and a proper shake.',
 		},
 		'jump-board': {
 			short: 'Jump Board',
@@ -344,6 +360,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water', 'A towel'],
 			prerequisite: 'Comfortable in Flow.',
 			rooms: { mitte: 'long-room', kreuzberg: 'canal-room' },
+			audience: 'Runners, ex-athletes and anyone who wants their heart rate up without the impact on their knees.',
 		},
 		tower: {
 			short: 'Tower',
@@ -354,6 +371,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water', 'A towel'],
 			prerequisite: 'Around fifteen Sculpt classes first.',
 			rooms: { mitte: 'tower-room' },
+			audience: 'Experienced students who want the classical repertoire and a teacher close enough to adjust every rep.',
 		},
 		prenatal: {
 			short: 'Prenatal',
@@ -364,6 +382,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water', 'Your midwife’s OK'],
 			prerequisite: 'From the second trimester, with your midwife or doctor’s OK.',
 			rooms: { mitte: 'long-room', kreuzberg: 'canal-room', 'prenzlauer-berg': 'courtyard-room' },
+			audience: 'Pregnant students from the second trimester, new to the reformer or not. Every exercise has a side-lying option.',
 		},
 		'mat-props': {
 			short: 'Mat & Props',
@@ -374,6 +393,7 @@ export const siteConfig = {
 			whatToBring: ['Grip socks', 'Water'],
 			prerequisite: null,
 			rooms: { kreuzberg: 'mat-loft' },
+			audience: 'Every level. Good between reformer days, and the cheapest way to learn the basics.',
 		},
 		'online-mat': {
 			short: 'Online Mat',
@@ -384,6 +404,7 @@ export const siteConfig = {
 			whatToBring: ['A mat', 'A towel', 'A laptop where the teacher can see you'],
 			prerequisite: null,
 			rooms: {},
+			audience: 'Anyone with a mat and half an hour: travelling, at home with kids, or out of Berlin.',
 		},
 	} satisfies Record<string, ClassMeta>,
 
@@ -395,6 +416,13 @@ export const siteConfig = {
 			solo: { label: '1:1', people: 1, description: 'You and a teacher. Good for a first session, an injury or a goal.' },
 			duet: { label: 'Duet', people: 2, description: 'Two people, two reformers, one teacher. Priced per session.' },
 		},
+		/** What a private is for (privates page). */
+		uses: [
+			{ title: 'Injury and rehab', body: 'Back, knee, shoulder or post-surgery. We work around it, with your physio’s notes if you have them.' },
+			{ title: 'Technique', body: 'Slow the repertoire down, fix the one cue that never lands, and go back to class with it.' },
+			{ title: 'Prenatal and postnatal', body: 'Every trimester and the months after, at your pace. Bring your midwife’s OK.' },
+			{ title: 'A first session', body: 'Nervous about a group class? Learn the springs, the straps and the footbar one to one.' },
+		],
 	},
 
 	/** Workshops by product slug. */
@@ -403,18 +431,35 @@ export const siteConfig = {
 			spring: 'blue',
 			tagline: 'Two hours on reformer anatomy: what each spring does to your body, and how to pick them yourself.',
 			whatToBring: ['Grip socks', 'Water', 'A notebook'],
+			description:
+				'Lena takes the Long Room apart, spring by spring. You will feel the same exercise on a green, a yellow and a red, learn why a lighter spring is often the harder one, and leave able to set up your own bed without waiting for a cue. Half lecture, half reformer; good after a few months of classes.',
+			room: 'long-room',
 		},
 		'workshop-reformer-for-runners': {
 			spring: 'blue',
 			tagline: 'Hips, ankles and posterior chain for runners. Bring your training questions.',
 			whatToBring: ['Grip socks', 'Water'],
+			description:
+				'Noah ran the 400 m before he taught Pilates. This is the session he wishes he had then: single-leg work for hips and ankles, footwork for calves that take the Tempelhof loop every week, and a short routine you can do before a long run. Any pace, any distance. Reformer experience helps but isn’t needed.',
+			room: 'canal-room',
 		},
 		'workshop-teacher-training-taster': {
 			spring: 'blue',
 			tagline: 'An afternoon inside our teacher training: cueing, set-ups and teaching your first block.',
 			whatToBring: ['Grip socks', 'Water', 'A notebook'],
+			description:
+				'Thinking about teaching? Clara runs a compressed afternoon of our training: how to watch a body on the carriage, how to cue in fewer words, and how to set up eight beds in two minutes. You teach a short block to the room before the end. Eight places, because everyone gets feedback.',
+			room: 'courtyard-room',
 		},
 	} satisfies Record<string, WorkshopMeta>,
+
+	/** Workshops page copy. */
+	workshopsPage: {
+		intro: 'Two hours on one subject, a few Saturdays a season. Small rooms, one teacher, plenty of questions.',
+		soldOut: 'Sold out',
+		joinNext: 'Join the next one: new dates go up a few weeks ahead. Ask at the desk or write to us and we’ll tell you first.',
+		empty: 'No workshops on the calendar right now. New dates go up a few weeks ahead.',
+	},
 
 	/** The level path: Foundations → Flow → Sculpt → Tower. */
 	levels: [

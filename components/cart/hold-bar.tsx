@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
+import { CarriageRail } from '@/components/motifs/carriage-rail';
 
 const URGENT_SECONDS = 120;
 
@@ -24,9 +25,9 @@ function clock(total: number): string {
 }
 
 /**
- * "Held for you" — the bed is held while the visitor checks out. A
- * hairline drains as the hold runs down, the countdown turns spring red under two
- * minutes, and Extend asks the studio for more time.
+ * "Bed held": the hold as a carriage rail. The carriage rides back along the
+ * rail as the hold runs down, the rail turns spring red under two minutes, and
+ * Extend asks the studio for more time.
  */
 export function HoldBar({ timeRemaining, expiresAt, onExtend, onNavigate, className }: HoldBarProps) {
 	// Baseline = the longest remaining time seen for this expiresAt, so the line
@@ -56,10 +57,10 @@ export function HoldBar({ timeRemaining, expiresAt, onExtend, onNavigate, classN
 
 	if (expired) {
 		return (
-			<div role="status" className={clsx('border border-ink/30 bg-ink/5 px-4 py-3', className)}>
-				<p className="eyebrow text-ink">The hold has lapsed</p>
+			<div role="status" className={clsx('rounded-[2px] border border-spring-red/40 bg-spring-red-soft/50 px-4 py-3', className)}>
+				<p className="eyebrow text-spring-red">The hold has lapsed</p>
 				<p className="mt-1.5 text-sm text-ink">
-					Your bed was released.{' '}
+					Your bed went back to the room.{' '}
 					<Link href="/timetable" onClick={onNavigate} className="link-underline font-medium">
 						Choose a new time
 					</Link>
@@ -72,11 +73,11 @@ export function HoldBar({ timeRemaining, expiresAt, onExtend, onNavigate, classN
 		<div className={clsx('relative', className)}>
 			<div className="flex items-center justify-between gap-4">
 				<p className="flex items-baseline gap-2.5">
-					<span className={clsx('eyebrow transition-colors duration-500', urgent ? 'text-ink' : 'text-steel')}>
-						Held for you
+					<span className={clsx('eyebrow transition-colors duration-500', urgent ? 'text-spring-red' : 'text-graphite')}>
+						Bed held
 					</span>
 					<span
-						className={clsx('tabular text-sm transition-colors duration-500', urgent ? 'text-ink' : 'text-ink')}
+						className={clsx('tabular text-sm transition-colors duration-500', urgent ? 'text-spring-red' : 'text-ink')}
 						aria-label={`${Math.floor(timeRemaining / 60)} minutes ${timeRemaining % 60} seconds left`}
 						role="timer"
 					>
@@ -89,21 +90,13 @@ export function HoldBar({ timeRemaining, expiresAt, onExtend, onNavigate, classN
 					disabled={extending}
 					className={clsx(
 						'eyebrow link-underline py-1 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink disabled:opacity-50',
-						urgent ? 'text-ink' : 'text-ink hover:text-ink',
+						'text-ink',
 					)}
 				>
 					{extending ? 'Extending…' : 'Extend'}
 				</button>
 			</div>
-			<div className="relative mt-2.5 h-px w-full bg-line" aria-hidden>
-				<div
-					className={clsx(
-						'absolute inset-0 origin-left transition-[transform,background-color] duration-1000 ease-linear',
-						urgent ? 'bg-ink' : 'bg-steel',
-					)}
-					style={{ transform: `scaleX(${progress})` }}
-				/>
-			</div>
+			<CarriageRail value={progress} tone={urgent ? 'red' : 'ink'} className="mt-2" />
 			{/* Polite announcement only when it turns urgent, not every second. */}
 			<span className="sr-only" aria-live="polite">
 				{urgent ? 'Less than two minutes left on your hold. Use Extend for more time.' : ''}

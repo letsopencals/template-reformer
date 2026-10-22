@@ -154,3 +154,31 @@ async function loadTimetable(): Promise<Occurrence[]> {
  * visitor. Filter it with the helpers in lib/timetable.ts.
  */
 export const getTimetable = cache(unstable_cache(loadTimetable, ['tensile-timetable-v1'], { revalidate: 300 }));
+
+/* ---------------------------------------------------------------- Workshops */
+
+/** Workshops are dated and sell further ahead than the 21-day class window (seeded up to 45 days). */
+const WORKSHOP_HORIZON_DAYS = 60;
+
+async function loadWorkshopOccurrences(): Promise<Occurrence[]> {
+	const catalog = await getCatalog();
+	const series = catalog.workshops.flatMap((w) => w.series);
+	const slots = await mapLimit(series, CONCURRENCY, async (s) => {
+		try {
+			const { data } = await ProductService.getCurrentAvailabilitiesMerged({ path: { productId: s.id } });
+			return [s.id, Array.isArray(data) ? data : []] as const;
+		} catch {
+			return [s.id, [] as CurrentAvailabilitySlot[]] as const;
+		}
+	});
+	// Workshops are never inferred Full: a sold-out date just isn't returned.
+	return buildTimetable(series, Object.fromEntries(slots), { now: Date.now(), horizonDays: WORKSHOP_HORIZON_DAYS });
+}
+
+/**
+ * Every bookable workshop date over the next 60 days (`getTimetable` stops at
+ * the 21-day class window). Cached for 5 minutes like the timetable.
+ */
+export const getWorkshopOccurrences = cache(
+	unstable_cache(loadWorkshopOccurrences, ['tensile-workshops-v1'], { revalidate: 300 }),
+);

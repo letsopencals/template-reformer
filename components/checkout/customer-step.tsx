@@ -26,8 +26,8 @@ export function CustomerStep() {
 		<form id={DETAILS_FORM_ID} onSubmit={handleSaveCustomer} className="space-y-6">
 			{customerId ? null : (
 				<p className="text-sm text-graphite">
-					Been with us before?{' '}
-					<Link href="/auth/sign-in?callbackUrl=/checkout" className="link-underline text-ink hover:text-ink">
+					Booked with us before?{' '}
+					<Link href="/login?callbackUrl=/checkout" className="link-underline text-ink hover:text-ink">
 						Sign in
 					</Link>{' '}
 					and we&rsquo;ll fill this in.
@@ -41,7 +41,7 @@ export function CustomerStep() {
 					autoComplete="email"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
-					placeholder="you@example.com"
+					placeholder="you@example.de"
 				/>
 			</Field>
 			<div className="grid gap-6 sm:grid-cols-2">
@@ -52,7 +52,7 @@ export function CustomerStep() {
 						autoComplete="given-name"
 						value={firstName}
 						onChange={(e) => setFirstName(e.target.value)}
-						placeholder="Jane"
+						placeholder="Lea"
 					/>
 				</Field>
 				<Field htmlFor="checkout-last-name" label="Last name">
@@ -62,12 +62,12 @@ export function CustomerStep() {
 						autoComplete="family-name"
 						value={lastName}
 						onChange={(e) => setLastName(e.target.value)}
-						placeholder="Smith"
+						placeholder="Schneider"
 					/>
 				</Field>
 			</div>
 			<p className="text-xs leading-relaxed text-graphite">
-				We&rsquo;ll send your confirmation and a reminder the day before. Nothing else unless you ask.
+				Your confirmation and a reminder the day before go here. Nothing else unless you ask.
 			</p>
 			<Button
 				type="submit"

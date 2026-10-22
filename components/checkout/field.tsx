@@ -19,7 +19,7 @@ export function Field({
 			<label htmlFor={htmlFor} className="eyebrow mb-2.5 block text-[0.62rem] text-graphite">
 				{label}
 				{required ? (
-					<span className="ml-1 text-ink" aria-hidden>
+					<span className="ml-1 text-spring-red" aria-hidden>
 						*
 					</span>
 				) : null}

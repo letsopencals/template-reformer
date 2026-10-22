@@ -5,8 +5,8 @@ export interface RoomPlanProps {
 	room: Pick<RoomMeta, 'name' | 'beds' | 'layout' | 'equipment'>;
 	/** Beds taken (filled ink from the back row). */
 	taken?: number;
-	/** 0-based bed index to highlight as "yours" (spring colour outline). */
-	highlight?: number | null;
+	/** 0-based bed index (or indices, e.g. a duet) to highlight as "yours" (spring colour outline). */
+	highlight?: number | number[] | null;
 	/** Colour for the highlighted bed (CSS colour, e.g. `var(--color-spring-blue)`). */
 	highlightColor?: string;
 	/** Draw the room name and the front (teacher) line. */
@@ -43,7 +43,7 @@ export function RoomPlan({ room, taken = 0, highlight = null, highlightColor = '
 				const x = PAD + c * (BED_W + GAP_X);
 				const y = PAD + r * (BED_H + GAP_Y);
 				const isTaken = i < taken;
-				const isMine = highlight === i;
+				const isMine = Array.isArray(highlight) ? highlight.includes(i) : highlight === i;
 				const stroke = isMine ? highlightColor : isTaken ? 'var(--color-ink)' : 'var(--color-concrete)';
 				const fill = isTaken && !isMine ? 'var(--color-ink)' : 'none';
 				return (

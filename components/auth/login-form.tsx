@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLink, AuthShell } from '@/components/auth/auth-shell';
 import { FIELD_LABEL, Notice } from '@/components/auth/auth-feedback';
+import { CarriageRail } from '@/components/motifs/carriage-rail';
 
 /**
  * Passwordless sign-in: email → 6-digit code (the `login-code` provider).
@@ -117,6 +118,13 @@ export function LoginForm({ callbackUrl, initialEmail = '' }: LoginFormProps) {
 				</>
 			}
 		>
+			<div className="mb-8">
+				<CarriageRail value={step === 'email' ? 0.5 : 1} label={step === 'email' ? 'Step 1 of 2: email' : 'Step 2 of 2: code'} />
+				<p aria-hidden className="eyebrow mt-2 flex justify-between text-[0.62rem] text-steel">
+					<span className={step === 'email' ? 'text-ink' : undefined}>01 · Email</span>
+					<span className={step === 'code' ? 'text-ink' : undefined}>02 · Code</span>
+				</p>
+			</div>
 			{error ? <Notice className="mb-6">{error}</Notice> : null}
 
 			{step === 'email' ? (

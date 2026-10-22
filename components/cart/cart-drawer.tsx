@@ -156,7 +156,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 									onClick={onClose}
 									className="link-underline mx-auto mt-4 block w-fit text-xs text-graphite hover:text-ink"
 								>
-									Add another service from The Menu
+									Add another class from the timetable
 								</Link>
 							</footer>
 						) : null}

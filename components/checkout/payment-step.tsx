@@ -17,11 +17,19 @@ interface PaymentStepProps {
 	onProcessingChange: (processing: boolean) => void;
 }
 
-/** 03 — Payment, once a method is started: the Stripe element (or a cash confirm). */
+/** Payment, once a method is started: the Stripe element (or a pay-at-the-studio confirm). */
 export function PaymentStep({ payLabel, onProcessingChange }: PaymentStepProps) {
-	const { selectedProvider, paymentData, submitting, isExpired, setStep, setError, handleSubmitCheckout } = useCheckout();
+	const { selectedProvider, paymentData, providers, submitting, isExpired, setStep, setError, handleSubmitCheckout, handleStartCheckout } = useCheckout();
 
 	if (!paymentData) return null;
+	const canPayAtStudio = providers.some((p) => p.name === 'cash');
+	const studioFallback = canPayAtStudio ? (
+		<Button variant="outline" size="md" className="mt-4" disabled={submitting || isExpired} onClick={() => void handleStartCheckout('cash')}>
+			Confirm and pay at the studio
+		</Button>
+	) : (
+		<p className="mt-2 text-sm text-graphite">Call the studio and we&rsquo;ll book you in by phone.</p>
+	);
 
 	return (
 		<div className="space-y-6">
@@ -29,6 +37,8 @@ export function PaymentStep({ payLabel, onProcessingChange }: PaymentStepProps) 
 				<StripePayment
 					clientSecret={paymentData.clientSecret}
 					stripeAccountId={paymentData.stripeAccountId}
+					publishableKey={paymentData.publishableKey}
+					fallback={studioFallback}
 					onSuccess={(piId) => handleSubmitCheckout(piId)}
 					onError={(msg) => setError(msg)}
 					disabled={isExpired || submitting}
@@ -36,9 +46,9 @@ export function PaymentStep({ payLabel, onProcessingChange }: PaymentStepProps) 
 					onProcessingChange={onProcessingChange}
 				/>
 			) : selectedProvider === 'cash' ? (
-				<div className="border border-line bg-paper p-6">
-					<p className="font-display text-[1.3rem] text-ink">Pay at the studio</p>
-					<p className="mt-2 text-sm text-graphite">We&rsquo;ll hold your bed; pay at the front desk before class.</p>
+				<div className="rounded-[4px] border border-line bg-paper p-6">
+					<p className="headline text-[1.25rem] text-ink">Pay at the studio</p>
+					<p className="mt-2 text-sm text-graphite">Your bed is held. Pay at the front desk when you arrive, card or cash.</p>
 					<Button
 						variant="primary"
 						size="lg"

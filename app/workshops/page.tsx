@@ -1,23 +1,42 @@
 import type { Metadata } from 'next';
-import { StubPage } from '@/components/layout/stub-page';
-import { getCatalog } from '@/lib/server-data';
+import Link from 'next/link';
+import { PageHeading } from '@/components/ui/page-heading';
+import { buttonClasses } from '@/components/ui/button';
+import { WorkshopEntry } from '@/components/workshops/workshop-entry';
+import { buildWorkshopListings } from '@/components/workshops/workshop-model';
+import { getCatalog, getWorkshopOccurrences } from '@/lib/server-data';
+import { siteConfig } from '@/lib/site-config';
 
 export const metadata: Metadata = { title: 'Workshops', description: 'Two-hour workshops on reformer anatomy, running and teaching.' };
 export const revalidate = 300;
 
-// TODO(P3 workshops): dated workshop listings; full workshops simply disappear.
 export default async function WorkshopsPage() {
-	const { workshops } = await getCatalog();
+	const [catalog, occurrences] = await Promise.all([getCatalog(), getWorkshopOccurrences()]);
+	const workshops = buildWorkshopListings(catalog, occurrences);
 	return (
-		<StubPage eyebrow="Workshops" title="Workshops" owner="P3 privates/workshops">
-			<ul className="divide-y divide-line border-y border-line">
-				{workshops.map((w) => (
-					<li key={w.key} className="py-4">
-						<p className="headline text-xl">{w.title}</p>
-						<p className="mt-1 text-sm text-graphite">{w.workshopMeta?.tagline}</p>
-					</li>
-				))}
-			</ul>
-		</StubPage>
+		<>
+			<PageHeading
+				eyebrow="Workshops · Saturdays"
+				title={
+					<>
+						Two hours, <em>one subject</em>
+					</>
+				}
+				intro={siteConfig.workshopsPage.intro}
+			/>
+			<div className="container-x pb-24">
+				{workshops.length ? (
+					workshops.map((w, i) => <WorkshopEntry key={w.key} workshop={w} index={i} />)
+				) : (
+					<div className="rounded-[4px] border border-line bg-paper p-8 sm:p-12">
+						<p className="display-sm max-w-xl text-ink">{siteConfig.workshopsPage.empty}</p>
+						<Link href="/timetable" className={buttonClasses({ variant: 'outline', className: 'mt-8' })}>
+							See the timetable
+						</Link>
+					</div>
+				)}
+				<span aria-hidden className="cable" />
+			</div>
+		</>
 	);
 }

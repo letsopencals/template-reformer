@@ -34,7 +34,7 @@ export function OrderStack({ className }: { className?: string }) {
 			<div className="flex items-baseline justify-between">
 				<p className="eyebrow text-graphite">Your beds</p>
 				<p className="tabular text-xs text-steel">
-					{String(lines.length).padStart(2, '0')} {lines.length === 1 ? 'appointment' : 'appointments'}
+					{String(lines.length).padStart(2, '0')} {lines.length === 1 ? 'booking' : 'bookings'}
 				</p>
 			</div>
 

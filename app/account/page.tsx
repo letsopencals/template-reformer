@@ -1,9 +1,11 @@
-import { StubPage } from '@/components/layout/stub-page';
+import { AccountHome } from '@/components/account/account-home';
 
 export const dynamic = 'force-dynamic';
 
-// TODO(P5 account): "Your week" with cancel/reschedule (12 h policy), Join for online
-// classes, feedback, and the level path (lib/level-path.ts).
+/**
+ * "Your week": upcoming classes with move/cancel (12 h cutoff), Join for online
+ * classes, feedback after a class, the level path and studios visited.
+ */
 export default function AccountPage() {
-	return <StubPage eyebrow="Your account" title="Your week" owner="P5 account + confirmation" />;
+	return <AccountHome />;
 }

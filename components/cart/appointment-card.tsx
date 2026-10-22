@@ -81,9 +81,9 @@ export const AppointmentCard = memo(function AppointmentCard({
 							)}
 						</p>
 					</div>
-					<h3 className="mt-1 font-display text-[1.35rem] leading-[1.1] text-ink">{line.title}</h3>
+					<h3 className="headline mt-1 text-[1.2rem] leading-[1.1] text-ink">{line.title}</h3>
 					<p className="mt-1 truncate text-[0.8rem] text-graphite">
-						{line.option ? <span className="italic-display text-[0.95rem] text-ink">{line.option}</span> : null}
+						{line.option ? <span className="text-ink">{line.option}</span> : null}
 						{line.option && line.staffName ? <span aria-hidden> · </span> : null}
 						{line.staffName ? <>with {line.staffName}</> : null}
 					</p>
@@ -145,7 +145,7 @@ export const AppointmentCard = memo(function AppointmentCard({
 								type="button"
 								onClick={handleRemove}
 								disabled={removing}
-								className="eyebrow text-[0.62rem] text-red-700 hover:text-red-800 focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-50"
+								className="eyebrow text-[0.62rem] text-ink underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-50"
 							>
 								{removing ? 'Removing…' : 'Yes, remove'}
 							</button>
@@ -154,7 +154,7 @@ export const AppointmentCard = memo(function AppointmentCard({
 						<button
 							type="button"
 							onClick={() => setConfirming(true)}
-							className="eyebrow text-[0.62rem] text-graphite transition-colors hover:text-red-700 focus-visible:outline-2 focus-visible:outline-ink"
+							className="eyebrow text-[0.62rem] text-graphite transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-ink"
 						>
 							Remove
 						</button>
@@ -230,7 +230,7 @@ function AddOnRow({ addOn, currency, editable, onQuantity, onRemove }: AddOnRowP
 					disabled={pending}
 					onClick={() => run(() => onRemove(addOn.id))}
 					aria-label={`Remove ${addOn.title}`}
-					className="-mr-1.5 flex h-7 w-7 items-center justify-center text-graphite transition-colors hover:text-red-700 focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-40"
+					className="-mr-1.5 flex h-7 w-7 items-center justify-center text-graphite transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-ink disabled:opacity-40"
 				>
 					<svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={1.4} aria-hidden>
 						<path d="M2.5 2.5l7 7M9.5 2.5l-7 7" />

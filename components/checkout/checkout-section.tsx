@@ -56,7 +56,7 @@ export function CheckoutSection({ id, index, title, state, summary, lockedHint, 
 					<h2
 						id={`${id}-title`}
 						className={clsx(
-							'font-display text-[clamp(1.6rem,2.6vw,2.25rem)] leading-[1.05] tracking-[-0.02em] transition-colors duration-500',
+							'display-sm transition-colors duration-500',
 							locked ? 'text-concrete' : 'text-ink',
 						)}
 					>
@@ -103,12 +103,12 @@ function StateMark({ state }: { state: SectionState }) {
 	}
 	if (state === 'done') {
 		return (
-			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-steel text-steel" aria-label="Done">
+			<span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[2px] border border-steel text-steel" aria-label="Done">
 				<svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden>
 					<path d="M3 8.5l3.2 3L13 4.5" />
 				</svg>
 			</span>
 		);
 	}
-	return <span className="h-2 w-2 shrink-0 translate-y-[-0.3em] rounded-full bg-ink" aria-label="Current step" />;
+	return <span className="h-2 w-3 shrink-0 translate-y-[-0.3em] rounded-[1px] bg-ink" aria-label="Current step" />;
 }
