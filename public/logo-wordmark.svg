@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 686 100" role="img" aria-label="Tensile">
+  <title>Tensile</title>
+  <g fill="#121212">
+    <rect x="0" y="0" width="108" height="26"/>
+    <rect x="41.0" y="0" width="26" height="100"/>
+    <rect x="120" y="0" width="26" height="100"/>
+    <rect x="120" y="0" width="90" height="26"/>
+    <rect x="120" y="37.0" width="82" height="26"/>
+    <rect x="120" y="74" width="90" height="26"/>
+    <rect x="222" y="0" width="26" height="100"/>
+    <rect x="304" y="0" width="26" height="100"/>
+    <polygon points="222,0 254.5,0 330,100 297.5,100"/>
+    <path d="M448 13.0 H373.5 A18.5 18.5 0 0 0 355.0 31.5 A18.5 18.5 0 0 0 373.5 50.0 H416.5 A18.5 18.5 0 0 1 435.0 68.5 A18.5 18.5 0 0 1 416.5 87.0 H342" fill="none" stroke="#121212" stroke-width="26" stroke-linejoin="round"/>
+    <rect x="460" y="0" width="26" height="100"/>
+    <rect x="498" y="0" width="26" height="100"/>
+    <rect x="498" y="74" width="86" height="26"/>
+    <rect x="596" y="0" width="26" height="100"/>
+    <rect x="596" y="0" width="90" height="26"/>
+    <rect x="596" y="37.0" width="82" height="26"/>
+    <rect x="596" y="74" width="90" height="26"/>
+  </g>
+</svg>
