@@ -42,8 +42,8 @@ export function Logo({ src, className, inverted = false }: { src?: string | null
 			onLoad={url === FALLBACK ? undefined : (e) => setShape(shapeOf(e.currentTarget))}
 			onError={url === FALLBACK ? undefined : () => setFailed(true)}
 			className={clsx(
-				'w-auto max-w-[11rem] object-contain object-left select-none',
-				shape === 'compact' ? 'h-10 sm:h-12' : 'h-6 sm:h-7',
+				'w-auto max-w-[16rem] object-contain object-left select-none',
+				shape === 'compact' ? 'h-10 sm:h-12' : 'h-6 sm:h-8',
 				inverted && url === FALLBACK ? 'invert' : null,
 				className,
 			)}
