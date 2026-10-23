@@ -174,10 +174,14 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			setSubmitting(true);
 
 			try {
-				const answerArray = Object.entries(answers).map(([questionId, value]) => ({
-					questionId,
-					value,
-				}));
+				// The API wants the question text alongside each answer (kept as a historical record).
+				const answerArray = questions
+					.filter((q) => answers[q.id] !== undefined && answers[q.id] !== '')
+					.map((q) => ({
+						questionId: q.id,
+						question: q.translations?.[0]?.title ?? q.internalName,
+						answer: answers[q.id] as string,
+					}));
 
 				const res = await fetch('/api/checkout/save-answers', {
 					method: 'POST',
@@ -196,7 +200,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 				setSubmitting(false);
 			}
 		},
-		[answers, cartHeaders],
+		[answers, questions, cartHeaders],
 	);
 
 	// Step 3: Start checkout with selected provider

@@ -82,12 +82,14 @@ export function Header({ logo, studios = [] }: { logo?: string | null; studios?:
 	}, []);
 	const closeCart = useCallback(() => setCartOpen(false), []);
 
+	// The sign-in pages are split screens with an ink panel under the header: keep the bar solid there.
+	const solid = scrolled || menuOpen || pathname.startsWith('/login') || pathname.startsWith('/link');
 	return (
 		<>
 			<motion.header
 				className={clsx(
 					'fixed inset-x-0 top-0 z-[60] border-b transition-colors duration-300',
-					scrolled || menuOpen ? 'border-line bg-plaster/92 backdrop-blur-md' : 'border-transparent bg-plaster/0',
+					solid ? 'border-line bg-plaster/92 backdrop-blur-md' : 'border-transparent bg-plaster/0',
 				)}
 				initial={false}
 				animate={hidden && !reduce ? BAR_HIDDEN : BAR_SHOWN}
