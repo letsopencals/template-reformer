@@ -203,7 +203,7 @@ body {
 	.container-x {
 		margin-inline: auto;
 		width: 100%;
-		max-width: 1320px;
+		max-width: 1440px;
 		padding-inline: 1.25rem;
 	}
 	@media (min-width: 48rem) {

@@ -32,7 +32,7 @@ export function FilterBar({ params, studios, classes, instructors, levels, onCha
 	const count = activeFilterCount(params);
 
 	return (
-		<div className="border-y border-line py-4 md:py-6">
+		<div className="border-b border-line pb-4 md:pb-6">
 			<div className="flex items-center justify-between gap-4 md:hidden">
 				<button
 					type="button"
@@ -48,22 +48,28 @@ export function FilterBar({ params, studios, classes, instructors, levels, onCha
 				</button>
 				{count > 0 ? <ClearButton onClear={onClear} /> : null}
 			</div>
-			<div id={panelId} className={clsx('mt-5 grid gap-5 md:mt-0 md:grid-cols-2 md:gap-x-10 md:gap-y-6 xl:grid-cols-[auto_1fr]', open ? null : 'max-md:hidden')}>
-				<FilterGroup label="Studio" options={studios.map((s) => ({ value: s.key, label: s.short }))} value={params.studio} onChange={(v) => onChange('studio', v)} />
-				<FilterGroup label="Time of day" options={TIME_OPTIONS} value={params.time} onChange={(v) => onChange('time', v)} />
-				<FilterGroup
-					label="Class"
-					options={classes.map((c) => ({ value: c.key, label: c.short, icon: <SpringCoil spring={c.spring} coils={3} /> }))}
-					value={params.class}
-					onChange={(v) => onChange('class', v)}
-				/>
-				<FilterGroup
-					label="Level"
-					options={levels.map((l) => ({ value: String(l.order), label: l.label }))}
-					value={params.level === null ? null : String(params.level)}
-					onChange={(v) => onChange('level', v)}
-				/>
-				<div className="md:col-span-2">
+			<div id={panelId} className={clsx('mt-5 grid gap-5 md:mt-0 md:gap-0 md:divide-y md:divide-line', open ? null : 'max-md:hidden')}>
+				<div className="grid gap-5 md:py-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:gap-x-10">
+					<FilterGroup label="Studio" options={studios.map((s) => ({ value: s.key, label: s.short }))} value={params.studio} onChange={(v) => onChange('studio', v)} />
+					<FilterGroup label="Time of day" options={TIME_OPTIONS} value={params.time} onChange={(v) => onChange('time', v)} />
+				</div>
+				<div className="md:py-3">
+					<FilterGroup
+						label="Class"
+						options={classes.map((c) => ({ value: c.key, label: c.short, icon: <SpringCoil spring={c.spring} coils={3} /> }))}
+						value={params.class}
+						onChange={(v) => onChange('class', v)}
+					/>
+				</div>
+				<div className="md:py-3">
+					<FilterGroup
+						label="Level"
+						options={levels.map((l) => ({ value: String(l.order), label: l.label }))}
+						value={params.level === null ? null : String(params.level)}
+						onChange={(v) => onChange('level', v)}
+					/>
+				</div>
+				<div className="md:py-3">
 					<FilterGroup
 						label="Instructor"
 						options={instructors.map((i) => ({ value: i.slug, label: i.firstName, icon: <Portrait src={i.image} /> }))}
@@ -73,7 +79,7 @@ export function FilterBar({ params, studios, classes, instructors, levels, onCha
 				</div>
 			</div>
 			{count > 0 ? (
-				<div className="mt-5 hidden justify-end md:flex">
+				<div className="mt-3 hidden justify-end md:flex">
 					<ClearButton onClear={onClear} />
 				</div>
 			) : null}

@@ -84,7 +84,7 @@ export function buildTimetableLookup(catalog: Catalog): TimetableLookup {
 		})),
 		classes: groups.map((ct) => ({
 			key: ct.key,
-			short: ct.meta?.short ?? ct.title,
+			short: ct.meta?.short ?? ct.title.split(':')[0]?.trim() ?? ct.title,
 			title: ct.title,
 			spring: ct.spring,
 			level: ct.level,

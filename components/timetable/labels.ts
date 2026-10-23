@@ -5,7 +5,7 @@ import { formatWholePrice } from '@/lib/format';
 /** Display labels for an occurrence, from site-config only (server and client safe). */
 
 export function classShort(o: Pick<Occurrence, 'classKey' | 'title'>): string {
-	return classMeta(o.classKey)?.short ?? o.title;
+	return classMeta(o.classKey)?.short ?? o.title.split(':')[0]?.trim() ?? o.title;
 }
 
 export function roomOf(o: Pick<Occurrence, 'studioKey' | 'roomKey'>): RoomMeta | null {

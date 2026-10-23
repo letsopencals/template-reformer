@@ -15,7 +15,7 @@ import {
 	type CurrentAvailabilitySlot,
 } from '@opencals/storefront-sdk';
 import { publicPayload } from '@/lib/public-payload';
-import { allSeries, buildCatalog, type Catalog } from '@/lib/catalog';
+import { allSeries, buildCatalog, type Catalog, type ClassSeries } from '@/lib/catalog';
 import { buildTimetable, type Occurrence } from '@/lib/timetable';
 
 /**
@@ -130,55 +130,92 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
 	return out;
 }
 
-async function loadTimetable(): Promise<Occurrence[]> {
-	const catalog = await getCatalog();
-	// Group classes, online classes and workshops. Privates are bookable start
-	// times on studio hours, not timetable rows: the privates wizard reads them live.
-	const series = allSeries(catalog).filter((s) => s.kind !== 'private');
-	const slots = await mapLimit(series, CONCURRENCY, async (s) => {
+/** Thrown inside the cached loaders so a partial fan-out is never stored. */
+class PartialAvailabilityError extends Error {}
+
+const RETRY_DELAYS_MS = [400, 1200];
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Merged availability for one series, retried on failure (429s during a fan-out are the usual cause). */
+async function fetchSeriesSlots(productId: string): Promise<CurrentAvailabilitySlot[] | null> {
+	for (let attempt = 0; ; attempt++) {
 		try {
 			// One call returns the whole booking horizon (one range per class).
-			const { data } = await ProductService.getCurrentAvailabilitiesMerged({ path: { productId: s.id } });
-			return [s.id, Array.isArray(data) ? data : []] as const;
-		} catch {
-			return [s.id, [] as CurrentAvailabilitySlot[]] as const;
+			const { data } = await ProductService.getCurrentAvailabilitiesMerged({ path: { productId } });
+			return Array.isArray(data) ? data : [];
+		} catch (error) {
+			const delay = RETRY_DELAYS_MS[attempt];
+			if (delay === undefined) {
+				console.warn(`[timetable] availability failed for product ${productId}`, error);
+				return null;
+			}
+			await sleep(delay);
 		}
-	});
-	return buildTimetable(series, Object.fromEntries(slots), { now: Date.now() });
+	}
 }
+
+/**
+ * Fan out over the series. With `strict`, any series that still fails after
+ * retries throws, so `unstable_cache` keeps its previous entry instead of
+ * caching a timetable with holes; the uncached fallback renders what it got.
+ */
+async function loadOccurrences(series: ClassSeries[], strict: boolean, horizonDays?: number): Promise<Occurrence[]> {
+	const results = await mapLimit(series, CONCURRENCY, async (s) => [s.id, await fetchSeriesSlots(s.id)] as const);
+	if (strict && results.some(([, slots]) => slots === null)) throw new PartialAvailabilityError();
+	const slots = Object.fromEntries(results.map(([id, list]) => [id, list ?? []]));
+	return buildTimetable(series, slots, { now: Date.now(), ...(horizonDays ? { horizonDays } : {}) });
+}
+
+/** Group classes, online classes and workshops. Privates are live studio-hours slots: the privates wizard reads them itself. */
+async function timetableSeries(): Promise<ClassSeries[]> {
+	return allSeries(await getCatalog()).filter((s) => s.kind !== 'private');
+}
+
+const cachedTimetable = unstable_cache(async () => loadOccurrences(await timetableSeries(), true), ['tensile-timetable-v2'], {
+	revalidate: 300,
+});
 
 /**
  * Every class occurrence in the booking window (21 days), including inferred
  * Full ones (see lib/timetable.ts). Cached for 5 minutes across requests: one
  * fan-out (one availability request per series, 6 at a time) serves every
- * visitor. Filter it with the helpers in lib/timetable.ts.
+ * visitor. If a series can't be read, this request renders uncached with what
+ * it has and the next one tries again. Filter with the helpers in lib/timetable.ts.
  */
-export const getTimetable = cache(unstable_cache(loadTimetable, ['tensile-timetable-v1'], { revalidate: 300 }));
+export const getTimetable = cache(async (): Promise<Occurrence[]> => {
+	try {
+		return await cachedTimetable();
+	} catch (error) {
+		if (!(error instanceof PartialAvailabilityError)) throw error;
+		return loadOccurrences(await timetableSeries(), false);
+	}
+});
 
 /* ---------------------------------------------------------------- Workshops */
 
 /** Workshops are dated and sell further ahead than the 21-day class window (seeded up to 45 days). */
 const WORKSHOP_HORIZON_DAYS = 60;
 
-async function loadWorkshopOccurrences(): Promise<Occurrence[]> {
-	const catalog = await getCatalog();
-	const series = catalog.workshops.flatMap((w) => w.series);
-	const slots = await mapLimit(series, CONCURRENCY, async (s) => {
-		try {
-			const { data } = await ProductService.getCurrentAvailabilitiesMerged({ path: { productId: s.id } });
-			return [s.id, Array.isArray(data) ? data : []] as const;
-		} catch {
-			return [s.id, [] as CurrentAvailabilitySlot[]] as const;
-		}
-	});
-	// Workshops are never inferred Full: a sold-out date just isn't returned.
-	return buildTimetable(series, Object.fromEntries(slots), { now: Date.now(), horizonDays: WORKSHOP_HORIZON_DAYS });
+async function workshopSeries(): Promise<ClassSeries[]> {
+	return (await getCatalog()).workshops.flatMap((w) => w.series);
 }
+
+// Workshops are never inferred Full: a sold-out date just isn't returned.
+const cachedWorkshops = unstable_cache(
+	async () => loadOccurrences(await workshopSeries(), true, WORKSHOP_HORIZON_DAYS),
+	['tensile-workshops-v2'],
+	{ revalidate: 300 },
+);
 
 /**
  * Every bookable workshop date over the next 60 days (`getTimetable` stops at
  * the 21-day class window). Cached for 5 minutes like the timetable.
  */
-export const getWorkshopOccurrences = cache(
-	unstable_cache(loadWorkshopOccurrences, ['tensile-workshops-v1'], { revalidate: 300 }),
-);
+export const getWorkshopOccurrences = cache(async (): Promise<Occurrence[]> => {
+	try {
+		return await cachedWorkshops();
+	} catch (error) {
+		if (!(error instanceof PartialAvailabilityError)) throw error;
+		return loadOccurrences(await workshopSeries(), false, WORKSHOP_HORIZON_DAYS);
+	}
+});

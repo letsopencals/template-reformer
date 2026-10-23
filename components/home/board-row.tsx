@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BedPips } from '@/components/motifs/bed-pips';
+import { BedPips, placesLeft, placeUnit } from '@/components/motifs/bed-pips';
 import { SpringCoil } from '@/components/motifs/spring-chip';
 import { Tag } from '@/components/ui/chip';
 import { siteConfig } from '@/lib/site-config';
@@ -44,7 +44,7 @@ export function BoardRow({ row, labels }: { row: BoardRowData; labels: BoardRowL
 			</p>
 			<p className="text-[0.92rem] text-graphite max-lg:hidden">{labels.teacher ?? ''}</p>
 			<div className="col-start-2 flex items-center justify-between gap-4 lg:contents">
-				<BedPips capacity={o.capacity} seatsLeft={full ? 0 : o.seatsLeft} max={12} />
+				<BedPips capacity={o.capacity} seatsLeft={full ? 0 : o.seatsLeft} max={12} unit={placeUnit(o)} />
 				<RowAction occurrence={o} next={row.next} nextLabel={labels.next} />
 			</div>
 		</>
@@ -55,7 +55,7 @@ export function BoardRow({ row, labels }: { row: BoardRowData; labels: BoardRowL
 		<li>
 			<Link
 				href={occurrenceHref(o)}
-				aria-label={`${o.title}, ${row.dayLabel} ${o.localTime}, ${labels.where}. ${o.seatsLeft} ${o.seatsLeft === 1 ? 'bed' : 'beds'} left. Open in the timetable.`}
+				aria-label={`${o.title}, ${row.dayLabel} ${o.localTime}, ${labels.where}. ${placesLeft(o.seatsLeft, placeUnit(o))}. Open in the timetable.`}
 				className={`${GRID} group transition-colors duration-300 hover:bg-plaster-deep focus-visible:bg-plaster-deep focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ink`}
 			>
 				{body}

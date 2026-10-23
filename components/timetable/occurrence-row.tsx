@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import type { Occurrence } from '@/lib/timetable';
 import { timetableHref } from '@/lib/timetable-url';
 import { formatLocalDate, pricePreview } from '@/lib/class-sheet';
-import { BedPips } from '@/components/motifs/bed-pips';
+import { BedPips, placesLeft, placeUnit } from '@/components/motifs/bed-pips';
 import { SpringChip } from '@/components/motifs/spring-chip';
 import { Tag } from '@/components/ui/chip';
 import { classShort, durationMinutes, instructorFromTitle, money, placeLabel } from './labels';
@@ -36,7 +36,7 @@ export function OccurrenceRow({ occurrence: o, next, instructorName, href, onOpe
 	const full = o.status === 'full';
 	const price = pricePreview(o);
 	const teacher = instructorName ?? instructorFromTitle(o);
-	const label = `${classShort(o)}, ${showDate ? `${formatLocalDate(o.localDate)} ` : ''}${o.localTime} with ${teacher}, ${placeLabel(o)}. ${full ? 'Full' : `${o.seatsLeft} beds left`}`;
+	const label = `${classShort(o)}, ${showDate ? `${formatLocalDate(o.localDate)} ` : ''}${o.localTime} with ${teacher}, ${placeLabel(o)}. ${full ? 'Full' : placesLeft(o.seatsLeft, placeUnit(o))}`;
 	const open = onOpen
 		? (target: Occurrence) => (e: React.MouseEvent) => {
 				if (e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -70,7 +70,7 @@ export function OccurrenceRow({ occurrence: o, next, instructorName, href, onOpe
 				</p>
 			</div>
 			<div className="relative col-start-2 flex flex-wrap items-center gap-x-4 gap-y-2 sm:col-start-3 sm:flex-col sm:items-end">
-				<BedPips capacity={o.capacity} seatsLeft={o.seatsLeft} className="pointer-events-none" />
+				<BedPips capacity={o.capacity} seatsLeft={o.seatsLeft} unit={placeUnit(o)} className="pointer-events-none" />
 				{full ? (
 					<NextLink next={next ?? null} scroll={scrollOnNav} onClick={open && next ? open(next) : undefined} />
 				) : (
