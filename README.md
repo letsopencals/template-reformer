@@ -2,7 +2,7 @@
 
 A production-ready booking website for a reformer Pilates or boutique fitness studio. Built with **Next.js 15**, **Tailwind CSS v4**, and the **Opencals Storefront SDK**.
 
-**[View Live Demo →](https://template-tensile.vercel.app)**
+**[View Live Demo →](https://template-reformer.vercel.app)**
 
 <!-- TODO(lead): cover image -->
 ![Tensile: the storefront on a laptop and phone in a pale concrete reformer studio](docs/cover.png)
@@ -23,7 +23,7 @@ Go to your **User Account Settings** in the Opencals dashboard and generate a **
 
 ### 3. Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fletsopencals%2Ftemplate-tensile&env=OPENCALS_API_KEY,AUTH_SECRET&envDescription=API%20key%20from%20your%20Opencals%20dashboard%20and%20a%20random%20secret%20for%20auth&project-name=tensile&repository-name=template-tensile)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fletsopencals%2Ftemplate-reformer&env=OPENCALS_API_KEY,AUTH_SECRET&envDescription=API%20key%20from%20your%20Opencals%20dashboard%20and%20a%20random%20secret%20for%20auth&project-name=tensile&repository-name=template-reformer)
 
 During deployment, Vercel will ask you to set environment variables:
 
@@ -103,8 +103,8 @@ Tensile uses existing Opencals features only. If you build your own studio, gym 
 ## Local Development
 
 ```bash
-git clone https://github.com/letsopencals/template-tensile.git
-cd template-tensile
+git clone https://github.com/letsopencals/template-reformer.git
+cd template-reformer
 npm install
 cp .env.example .env
 ```

@@ -13,12 +13,10 @@ export interface FooterStudio {
  * store settings (falling back to siteConfig.contact). A Server Component.
  */
 export function Footer({
-	logo,
 	studios,
 	email,
 	phone,
 }: {
-	logo?: string | null;
 	studios: FooterStudio[];
 	email: string;
 	phone: string;
@@ -29,7 +27,8 @@ export function Footer({
 			<div className="container-x pt-20 pb-10">
 				<div className="grid gap-12 lg:grid-cols-12">
 					<div className="lg:col-span-4">
-						<Logo src={logo} inverted className="h-7" />
+						{/* The bundled wordmark, inverted: store logos are often JPGs on a light background. */}
+						<Logo src={null} inverted />
 						<p className="mt-6 max-w-sm text-[0.95rem] leading-relaxed text-paper/70">{siteConfig.footer.description}</p>
 						<p className="eyebrow mt-8 text-paper/50">{siteConfig.tagline}</p>
 					</div>

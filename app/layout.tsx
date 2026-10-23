@@ -103,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 					<ScrollProgress />
 					<Header logo={logo} studios={studios.map((s) => ({ key: s.key, name: s.short }))} />
 					<main>{children}</main>
-					<Footer logo={logo} email={email} phone={phone} studios={studios.map((s) => ({ key: s.key, name: s.name, address: s.address }))} />
+					<Footer email={email} phone={phone} studios={studios.map((s) => ({ key: s.key, name: s.name, address: s.address }))} />
 				</Providers>
 				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
 			</body>
