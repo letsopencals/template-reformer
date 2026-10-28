@@ -6,7 +6,6 @@ import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-
 import { Button } from '@/components/ui/button';
 import { STRIPE_FORM_ID } from './form-ids';
 
-const envPublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 // DESIGN.md tokens as hex (Stripe's iframe can't read CSS variables): ink on
 // paper, steel labels, hairline fields, 2px corners, Archivo and Plex Mono.
@@ -64,7 +63,7 @@ const FONTS: StripeElementsOptions['fonts'] = [
 interface StripePaymentProps {
 	clientSecret: string;
 	stripeAccountId?: string | null;
-	/** Key returned by checkout start (matches the account's test/live mode); the env var is the fallback. */
+	/** Key returned by checkout start (matches the account's test/live mode). */
 	publishableKey?: string | null;
 	/** Shown when no key is configured: switch to another provider (pay at the studio). */
 	fallback?: React.ReactNode;
@@ -88,7 +87,7 @@ export function StripePayment({
 	payLabel,
 	onProcessingChange,
 }: StripePaymentProps) {
-	const publishableKey = responseKey || envPublishableKey;
+	const publishableKey = responseKey;
 	const stripePromise = useMemo(() => {
 		if (!publishableKey) return null;
 		return loadStripe(publishableKey, { stripeAccount: stripeAccountId ?? undefined });
@@ -102,13 +101,7 @@ export function StripePayment({
 				<p className="eyebrow text-spring-red">Card payments are off</p>
 				<p className="mt-1.5 text-sm text-ink">
 					This studio hasn&rsquo;t switched on card payments yet
-					{process.env.NODE_ENV === 'development' ? (
-						<>
-							{' '}
-							(set <code className="tabular text-xs">NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>)
-						</>
-					) : null}
-					.
+					{process.env.NODE_ENV === 'development' ? ' (connect Stripe in the Opencals dashboard)' : null}.
 				</p>
 				{fallback ?? null}
 			</div>
