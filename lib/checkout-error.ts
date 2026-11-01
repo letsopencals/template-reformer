@@ -1,3 +1,8 @@
+import type { CheckoutErrorCode, CheckoutErrorResponse } from '@opencals/storefront-sdk';
+
+/** A failed `/api/checkout/*` response body: `error` is the message, the rest is the API's checkout error body. */
+type CheckoutErrorBody = { error?: string } & Partial<CheckoutErrorResponse>;
+
 /**
  * Client side of `lib/api-error-handler.ts`: what a failed `/api/checkout/*`
  * call tells the checkout, read from the JSON body. Never throws on a body
@@ -5,11 +10,11 @@
  */
 export class CheckoutError extends Error {
 	readonly status: number;
-	readonly code: string | null;
-	readonly orderId: string | null;
-	readonly paymentStatus: string | null;
+	readonly code: CheckoutErrorCode | null;
+	readonly orderId: NonNullable<CheckoutErrorResponse['orderId']> | null;
+	readonly paymentStatus: NonNullable<CheckoutErrorResponse['paymentStatus']> | null;
 
-	constructor(message: string, status: number, body: Record<string, unknown> | null) {
+	constructor(message: string, status: number, body: CheckoutErrorBody | null) {
 		super(message);
 		this.name = 'CheckoutError';
 		this.status = status;
@@ -19,15 +24,16 @@ export class CheckoutError extends Error {
 	}
 }
 
-function str(v: unknown): string | null {
+/** A non-empty string field, else null (the body is parsed JSON, so check at runtime). */
+function str<T extends string>(v: T | null | undefined): T | null {
 	return typeof v === 'string' && v ? v : null;
 }
 
 export async function checkoutErrorFrom(res: Response, fallback: string): Promise<CheckoutError> {
-	let body: Record<string, unknown> | null = null;
+	let body: CheckoutErrorBody | null = null;
 	try {
 		const parsed: unknown = await res.json();
-		if (parsed && typeof parsed === 'object') body = parsed as Record<string, unknown>;
+		if (parsed && typeof parsed === 'object') body = parsed as CheckoutErrorBody;
 	} catch {
 		// not JSON
 	}

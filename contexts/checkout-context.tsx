@@ -19,12 +19,12 @@ import type {
 	SubmitCheckout,
 	CartItem,
 	CheckoutQuestionResponse as CheckoutQuestion,
+	PaymentProviderName,
 } from '@opencals/storefront-sdk';
 
 export type CheckoutStep = 'customer' | 'questions' | 'payment-select' | 'payment';
 
 type CheckoutMode = CustomerProviderCatalogItem['checkoutMode'];
-type ProviderName = CustomerProviderCatalogItem['name'];
 
 const IN_PROGRESS_RETRIES = 2;
 const IN_PROGRESS_DELAY_MS = 1500;
@@ -69,7 +69,7 @@ interface CheckoutContextValue {
 
 	// Payment
 	providers: CustomerProviderCatalogItem[];
-	selectedProvider: ProviderName | null;
+	selectedProvider: PaymentProviderName | null;
 	paymentData: CheckoutStartResponse | null;
 
 	// Cart info
@@ -84,7 +84,7 @@ interface CheckoutContextValue {
 	setError: (error: string | null) => void;
 	handleSaveCustomer: (e: React.FormEvent) => Promise<void>;
 	handleSaveAnswers: (e: React.FormEvent) => Promise<void>;
-	handleStartCheckout: (providerName: ProviderName) => Promise<void>;
+	handleStartCheckout: (providerName: PaymentProviderName) => Promise<void>;
 	handleSubmitCheckout: (stripePaymentIntentId?: string) => Promise<void>;
 	restartBooking: () => void;
 	extendCart: () => void;
@@ -129,7 +129,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 
 	// Payment
-	const [selectedProvider, setSelectedProvider] = useState<ProviderName | null>(null);
+	const [selectedProvider, setSelectedProvider] = useState<PaymentProviderName | null>(null);
 	const [paymentData, setPaymentData] = useState<CheckoutStartResponse | null>(null);
 
 	// Redirect if no cart — but only once CartProvider has read the stored cart id
@@ -303,7 +303,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 
 	// Step 3: Start checkout with selected provider
 	const handleStartCheckout = useCallback(
-		async (providerName: ProviderName) => {
+		async (providerName: PaymentProviderName) => {
 			setError(null);
 			setSubmitting(true);
 			setSelectedProvider(providerName);

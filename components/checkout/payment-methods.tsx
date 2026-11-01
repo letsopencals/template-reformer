@@ -2,14 +2,14 @@
 
 import type { FormEvent } from 'react';
 import { clsx } from 'clsx';
-import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
+import type { CustomerProviderCatalogItem, PaymentProviderName } from '@opencals/storefront-sdk';
 import { useCheckout } from '@/contexts/checkout-context';
 import { Button } from '@/components/ui/button';
 import { Tag } from '@/components/ui/chip';
 import { PAYMENT_METHOD_FORM_ID } from './form-ids';
 
 /** Primary-action label for a chosen provider (used here and by the mobile pay bar). */
-export function methodActionLabel(name: CustomerProviderCatalogItem['name'] | undefined, mode?: CustomerProviderCatalogItem['checkoutMode']): string {
+export function methodActionLabel(name: PaymentProviderName | undefined, mode?: CustomerProviderCatalogItem['checkoutMode']): string {
 	switch (name) {
 		case 'stripe':
 			return 'Continue to card';
@@ -27,8 +27,8 @@ export function methodActionLabel(name: CustomerProviderCatalogItem['name'] | un
 }
 
 interface PaymentMethodsProps {
-	method: CustomerProviderCatalogItem['name'] | undefined;
-	onMethodChange: (name: CustomerProviderCatalogItem['name']) => void;
+	method: PaymentProviderName | undefined;
+	onMethodChange: (name: PaymentProviderName) => void;
 }
 
 /**
@@ -79,7 +79,7 @@ interface MethodCardProps {
 	index: number;
 	checked: boolean;
 	disabled: boolean;
-	onSelect: (name: CustomerProviderCatalogItem['name']) => void;
+	onSelect: (name: PaymentProviderName) => void;
 }
 
 function MethodCard({ provider, index, checked, disabled, onSelect }: MethodCardProps) {
@@ -131,7 +131,7 @@ function MethodCard({ provider, index, checked, disabled, onSelect }: MethodCard
  * displayName/description are written for merchants ("Record cash payments
  * collected outside the system"), so they're only a fallback for unknown ones.
  */
-function customerTitle(name: CustomerProviderCatalogItem['name']): string | undefined {
+function customerTitle(name: PaymentProviderName): string | undefined {
 	switch (name) {
 		case 'stripe':
 			return 'Card';

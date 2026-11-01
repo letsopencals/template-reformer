@@ -1,4 +1,4 @@
-import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
+import type { CustomerProviderCatalogItem, PaymentProviderName } from '@opencals/storefront-sdk';
 import type { CheckoutStep } from '@/contexts/checkout-context';
 import { methodActionLabel } from './payment-methods';
 import type { PrimaryAction } from './pay-bar';
@@ -10,10 +10,10 @@ export interface ActionInput {
 	isExpired: boolean;
 	hasEmail: boolean;
 	hasProviders: boolean;
-	method: CustomerProviderCatalogItem['name'] | undefined;
+	method: PaymentProviderName | undefined;
 	/** How the chosen method checks out (catalog `checkoutMode`). */
 	methodMode: CustomerProviderCatalogItem['checkoutMode'] | undefined;
-	selectedProvider: CustomerProviderCatalogItem['name'] | null;
+	selectedProvider: PaymentProviderName | null;
 	/** The started checkout shows a card form. */
 	selectedIsCard: boolean;
 	stripeProcessing: boolean;

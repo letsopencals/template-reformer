@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import type { OrderDetailResponse, OrderDetailTransaction } from '@opencals/storefront-sdk';
+import type { OrderDetailResponse, OrderDetailTransaction, PaymentProviderName } from '@opencals/storefront-sdk';
 import { formatPrice } from '@/lib/format';
 import { siteConfig } from '@/lib/site-config';
 
@@ -9,7 +9,7 @@ type OrderLike = Pick<
 >;
 
 type Tx = Partial<Pick<OrderDetailTransaction, 'provider' | 'gateway'>>;
-type ManualProvider = Extract<OrderDetailTransaction['provider'], 'cash' | 'bank_transfer' | 'stripe_invoice'>;
+type ManualProvider = Extract<PaymentProviderName, 'cash' | 'bank_transfer' | 'stripe_invoice'>;
 
 /** The manual method an unpaid order is waiting on (cash, bank transfer, invoice), if any. */
 export function manualProviderOf(order: { transactions?: Tx[] | null }): ManualProvider | null {

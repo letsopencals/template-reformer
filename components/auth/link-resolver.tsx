@@ -3,16 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { resolveLink, type ResolveLinkResult } from '@/app/auth/actions/resolve-link';
+import type { MagicLinkErrorCode } from '@opencals/storefront-sdk';
+import { resolveLink } from '@/app/auth/actions/resolve-link';
 import { buttonClasses } from '@/components/ui/button';
 import { AuthShell } from '@/components/auth/auth-shell';
 import { Spinner } from '@/components/auth/auth-feedback';
 import { siteConfig } from '@/lib/site-config';
 import { normalizeRedirect } from '@/lib/link-redirect';
 
-type ErrorCode = NonNullable<ResolveLinkResult['errorCode']>;
-
-const ERROR_COPY: Record<ErrorCode, { title: string; message: string }> = {
+const ERROR_COPY: Record<MagicLinkErrorCode, { title: string; message: string }> = {
 	TOKEN_EXPIRED: {
 		title: 'This link has\nexpired.',
 		message: 'Email links expire after a while to keep your bookings safe. Sign in with a code instead; it takes a minute.',
@@ -29,7 +28,7 @@ const ERROR_COPY: Record<ErrorCode, { title: string; message: string }> = {
 export function LinkResolver({ token }: { token: string }) {
 	const router = useRouter();
 	const [status, setStatus] = useState<'resolving' | 'error'>('resolving');
-	const [errorCode, setErrorCode] = useState<ErrorCode>('TOKEN_INVALID');
+	const [errorCode, setErrorCode] = useState<MagicLinkErrorCode>('TOKEN_INVALID');
 	const ranRef = useRef(false);
 
 	useEffect(() => {
