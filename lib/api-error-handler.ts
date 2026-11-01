@@ -1,16 +1,12 @@
 import { OpencalsApiError } from '@opencals/storefront-sdk';
 import { NextResponse } from 'next/server';
 
-/**
- * The API sends checkout conflicts with extra fields: `orderId` on 409
- * CART_ALREADY_CHECKED_OUT and the provider's `paymentStatus` on 402
- * PAYMENT_NOT_AUTHORIZED. Read them when the error carries them.
- */
-type ApiErrorExtras = OpencalsApiError & { orderId?: unknown; paymentStatus?: unknown };
-
 export function handleApiError(err: unknown, fallbackMessage = 'Internal server error') {
 	if (err instanceof OpencalsApiError) {
-		const { orderId, paymentStatus } = err as ApiErrorExtras;
+		// Checkout conflicts carry extra fields in the body: `orderId` on 409 CART_ALREADY_CHECKED_OUT,
+		// the provider's `paymentStatus` on 402 PAYMENT_NOT_AUTHORIZED.
+		const orderId = err.body?.orderId;
+		const paymentStatus = err.body?.paymentStatus;
 		const fieldErrors = err.toFieldErrors();
 		return NextResponse.json(
 			{
