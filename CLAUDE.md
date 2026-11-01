@@ -208,7 +208,7 @@ RSC and client) rather than hand-writing query strings.
 - **SDK 0.3.18:** `checkout/submit` returns `auth` only for a trusted
   customer. Without it, the confirmation page must say "sign in with a code to
   see this booking in your account" rather than assume a session.
-- **SDK 0.4.0 checkout:** start routes on the provider's `checkoutMode`
+- **SDK 0.3.20 checkout:** start routes on the provider's `checkoutMode`
   (`internal` → Stripe step; `manual`/`none` → submit straight away; unknown
   providers use the API's `displayName`). Submit's `paymentInstructions` and
   the booking's waiting reason ride to `/thank-you` via sessionStorage
