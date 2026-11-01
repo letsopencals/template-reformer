@@ -1,5 +1,5 @@
 import { Reveal, RevealText } from '@/components/motion/reveal';
-import type { PendingReason } from '@/lib/booking-status';
+import type { StorefrontAppointmentPendingReason as PendingReason } from '@opencals/storefront-sdk';
 import { formatDue } from '@/components/confirmation/payment-instructions';
 
 const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six'];

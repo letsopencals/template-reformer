@@ -1,5 +1,5 @@
-import type { CheckoutResponse, PaymentInstructions } from '@opencals/storefront-sdk';
-import { pendingReasonOf, strongestReason, type PendingReason } from '@/lib/booking-status';
+import type { CheckoutResponse, PaymentInstructions, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
+import { pendingReasonOf, strongestReason } from '@/lib/booking-status';
 
 /**
  * What checkout submit knows that the confirmation page can't load again:
@@ -9,7 +9,7 @@ import { pendingReasonOf, strongestReason, type PendingReason } from '@/lib/book
  */
 export interface ConfirmationHandoff {
 	instructions: PaymentInstructions | null;
-	pendingReason: PendingReason | null;
+	pendingReason: StorefrontAppointmentPendingReason | null;
 	/** Order number, the bank transfer reference. */
 	orderName: string | null;
 }

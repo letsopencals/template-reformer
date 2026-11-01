@@ -1,3 +1,4 @@
+import type { AppointmentStatusType } from '@opencals/storefront-sdk';
 import { classKeyForSlug } from '@/lib/catalog';
 import { siteConfig, type LevelStep } from '@/lib/site-config';
 
@@ -31,7 +32,7 @@ export interface LevelPathResult {
 
 /** Minimal appointment shape: product slug, status and end time. */
 export interface CompletedLike {
-	status?: string | null;
+	status?: AppointmentStatusType | null;
 	to?: string | null;
 	product?: { slug?: string | null } | null;
 }

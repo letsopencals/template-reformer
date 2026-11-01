@@ -195,7 +195,7 @@ export function springFromColor(color: string | null | undefined, fallback: Spri
 	return (color && COLOR_TO_SPRING[color]) || fallback;
 }
 
-function toStudioRef(loc: { id: string; slug: string; title?: string | null; type?: string | null }): StudioRef {
+function toStudioRef(loc: Pick<LocationDetailResponse, 'id' | 'slug' | 'title' | 'type'>): StudioRef {
 	const meta = studioMeta(loc.slug);
 	const online = loc.type === siteConfig.locationTypes.online;
 	return {

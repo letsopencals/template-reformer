@@ -85,7 +85,7 @@ describe('pricePreview', () => {
 });
 
 describe('codeState', () => {
-	const intro = { id: 'd1', title: 'Intro offer', totalAmount: 10.2, scope: 'line_item' as const, code: null };
+	const intro = { id: 'd1', title: 'Intro offer', totalAmount: 10.2, code: null };
 	it('separates an active code from one outranked by an automatic discount', () => {
 		expect(codeState(null)).toEqual({ status: 'none' });
 		expect(codeState({ appliedDiscountCode: 'TENSILE10', appliedDiscounts: [intro] })).toEqual({ status: 'outranked', code: 'TENSILE10' });

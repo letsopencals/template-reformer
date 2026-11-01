@@ -10,10 +10,10 @@ export interface ActionInput {
 	isExpired: boolean;
 	hasEmail: boolean;
 	hasProviders: boolean;
-	method: string | undefined;
+	method: CustomerProviderCatalogItem['name'] | undefined;
 	/** How the chosen method checks out (catalog `checkoutMode`). */
 	methodMode: CustomerProviderCatalogItem['checkoutMode'] | undefined;
-	selectedProvider: string | null;
+	selectedProvider: CustomerProviderCatalogItem['name'] | null;
 	/** The started checkout shows a card form. */
 	selectedIsCard: boolean;
 	stripeProcessing: boolean;

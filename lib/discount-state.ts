@@ -1,4 +1,4 @@
-import type { AppliedDiscount } from '@/types/discount';
+import type { AppliedDiscount } from '@opencals/storefront-sdk';
 
 /**
  * Discounts never combine: the best single one wins per line. When an

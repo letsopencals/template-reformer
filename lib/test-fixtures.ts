@@ -11,8 +11,8 @@ import type {
 } from '@opencals/storefront-sdk';
 import type { ClassSeries } from '@/lib/catalog';
 
-type Loc = { id: string; slug: string; title: string; type: 'physical' | 'online' };
-type Staff = { id: string; slug: string; firstName: string; lastName: string };
+type Loc = Pick<LocationDetailResponse, 'id' | 'slug' | 'type'> & { title: string };
+type Staff = Pick<StaffMemberListItemResponse, 'id' | 'slug' | 'firstName' | 'lastName'>;
 
 export const LOC: Record<string, Loc> = {
 	mitte: { id: 'loc-mitte', slug: 'tensile-mitte', title: 'Tensile Mitte', type: 'physical' },

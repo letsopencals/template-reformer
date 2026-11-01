@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
 import { useCart } from '@/contexts/cart-context';
 import { useCheckout, type CheckoutStep } from '@/contexts/checkout-context';
 import { useSmoothScroll } from '@/components/motion/smooth-scroll';
@@ -111,7 +112,7 @@ function CheckoutBody() {
 	} = useCheckout();
 	const lenis = useSmoothScroll();
 
-	const [chosen, setChosen] = useState<string | undefined>();
+	const [chosen, setChosen] = useState<CustomerProviderCatalogItem['name'] | undefined>();
 	const method = chosen && providers.some((p) => p.name === chosen) ? chosen : providers[0]?.name;
 	const [stripeProcessing, setStripeProcessing] = useState(false);
 

@@ -4,13 +4,13 @@ import { useCallback } from 'react';
 import { clsx } from 'clsx';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { formatPrice } from '@/lib/format';
-import type { CartWithDiscounts } from '@/types/discount';
+import type { CartResponse } from '@opencals/storefront-sdk';
 import { cartSubtotal } from './cart-line';
 import { Tag } from '@/components/ui/chip';
 import { isAutomatic } from '@/lib/discount-state';
 
 interface CartTotalsProps {
-	cart: CartWithDiscounts;
+	cart: CartResponse;
 	/** Show the tax line (checkout). The drawer keeps it short. */
 	showTax?: boolean;
 	className?: string;

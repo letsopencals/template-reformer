@@ -1,7 +1,8 @@
 import { getBookingMeta, type AppointmentLike, type BookingMeta } from '@/lib/booking-meta';
 import { springFromColor } from '@/lib/catalog';
 import { localParts } from '@/lib/timetable';
-import { pendingReasonOf, type PendingReason } from '@/lib/booking-status';
+import type { AppointmentStatusType, StorefrontAppointmentPendingReason } from '@opencals/storefront-sdk';
+import { pendingReasonOf } from '@/lib/booking-status';
 import {
 	classMeta,
 	privateRoomFor,
@@ -24,8 +25,8 @@ import {
 /** Structural subset of the SDK appointment shapes this view needs. */
 export interface BookingAppt extends AppointmentLike {
 	id: string;
-	status?: string | null;
-	pendingReason?: string | null;
+	status?: AppointmentStatusType | null;
+	pendingReason?: StorefrontAppointmentPendingReason | null;
 	/** Null while the appointment is only a cart hold (no order yet). */
 	orderLineItem?: unknown;
 	productId?: string | null;
@@ -46,9 +47,9 @@ export interface BookingAppt extends AppointmentLike {
 
 export interface BookingView extends BookingMeta {
 	id: string;
-	status: string;
+	status: AppointmentStatusType;
 	/** Set only while the booking waits (pending with a reason); null = confirmed. */
-	pendingReason: PendingReason | null;
+	pendingReason: StorefrontAppointmentPendingReason | null;
 	/** A pending appointment with no order is a cart hold, not a booking. */
 	isHold: boolean;
 	/** Epoch ms. */

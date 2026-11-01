@@ -1,12 +1,11 @@
 import '@/lib/opencals';
-import { AppointmentService } from '@opencals/storefront-sdk';
+import { AppointmentService, type AppointmentStatusType } from '@opencals/storefront-sdk';
 import { requireAuth } from '@/lib/api-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { handleApiError } from '@/lib/api-error-handler';
 import { publicPayload } from '@/lib/public-payload';
 
-const STATUSES = ['pending', 'scheduled', 'completed', 'canceled'] as const;
-type AppointmentStatus = (typeof STATUSES)[number];
+const STATUSES: readonly AppointmentStatusType[] = ['pending', 'scheduled', 'completed', 'canceled'];
 
 export async function GET(request: NextRequest) {
 	const auth = await requireAuth();
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
 	const { searchParams } = request.nextUrl;
 	const take = searchParams.get('take') ?? '20';
 	const page = searchParams.get('page') ?? '1';
-	const status = searchParams.getAll('status').filter((s): s is AppointmentStatus => STATUSES.includes(s as AppointmentStatus));
+	const status = searchParams.getAll('status').filter((s): s is AppointmentStatusType => STATUSES.includes(s as AppointmentStatusType));
 	const orderBy = searchParams.get('orderBy') === 'from' ? 'from' : undefined;
 	const order = searchParams.get('order') === 'ASC' ? 'ASC' : searchParams.get('order') === 'DESC' ? 'DESC' : undefined;
 

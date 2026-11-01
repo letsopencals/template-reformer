@@ -1,3 +1,4 @@
+import type { LocationDetailResponse } from '@opencals/storefront-sdk';
 import { classKeyForSlug } from '@/lib/catalog';
 import { siteConfig } from '@/lib/site-config';
 
@@ -44,7 +45,7 @@ export interface AppointmentLike {
 	} | null;
 	location?: (AddressFields & {
 		title?: string | null;
-		type?: string | null;
+		type?: LocationDetailResponse['type'] | null;
 		link?: string | null;
 		address?: string | null;
 	}) | null;

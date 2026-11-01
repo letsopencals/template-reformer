@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
-import type { OrderListItemResponse } from '@opencals/storefront-sdk';
+import type { OrderListResponse } from '@opencals/storefront-sdk';
 import { fetcher } from '@/lib/fetcher';
 import { formatPrice } from '@/lib/format';
 import { siteConfig } from '@/lib/site-config';
@@ -15,15 +15,10 @@ import { paymentLabel } from '@/components/confirmation/order-summary';
 const SWR_OPTS = { revalidateOnFocus: false, keepPreviousData: true } as const;
 const TAKE = 15;
 
-interface OrderPage {
-	data: OrderListItemResponse[];
-	meta: { page: number; hasNextPage: boolean; hasPreviousPage: boolean; itemCount: number };
-}
-
 /** Every order, newest first: number, date, what was in it, total and payment status. */
 export function OrdersView() {
 	const [page, setPage] = useState(1);
-	const { data, error, isLoading, mutate } = useSWR<OrderPage>(`/api/account/orders?take=${TAKE}&page=${page}`, fetcher, SWR_OPTS);
+	const { data, error, isLoading, mutate } = useSWR<OrderListResponse>(`/api/account/orders?take=${TAKE}&page=${page}`, fetcher, SWR_OPTS);
 	const orders = data?.data ?? [];
 
 	return (

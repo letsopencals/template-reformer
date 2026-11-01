@@ -1,3 +1,5 @@
+import type { AppointmentStatusType, StorefrontAppointmentPendingReason as PendingReason } from '@opencals/storefront-sdk';
+
 /**
  * Whether a booking is confirmed or still waiting, from the appointment itself.
  *
@@ -6,9 +8,7 @@
  * no reason while a background job confirms it: that booking is confirmed, so
  * it reads as Booked, never as waiting.
  */
-export type PendingReason = 'awaiting_payment' | 'awaiting_approval';
-
-export function pendingReasonOf(appt: { status?: string | null; pendingReason?: string | null }): PendingReason | null {
+export function pendingReasonOf(appt: { status?: AppointmentStatusType | null; pendingReason?: PendingReason | null }): PendingReason | null {
 	if (appt.status !== 'pending') return null;
 	return appt.pendingReason === 'awaiting_payment' || appt.pendingReason === 'awaiting_approval' ? appt.pendingReason : null;
 }

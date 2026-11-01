@@ -11,8 +11,11 @@ import { CheckoutError, checkoutErrorCopy, checkoutErrorFrom } from '@/lib/check
 import { saveHandoff } from '@/lib/confirmation-handoff';
 import type {
 	CustomerProviderCatalogItem,
+	CheckoutCustomer,
+	CheckoutQuestionAnswers,
 	CheckoutStartResponse,
 	CheckoutResponse,
+	StartCheckout,
 	SubmitCheckout,
 	CartItem,
 	CheckoutQuestionResponse as CheckoutQuestion,
@@ -21,6 +24,7 @@ import type {
 export type CheckoutStep = 'customer' | 'questions' | 'payment-select' | 'payment';
 
 type CheckoutMode = CustomerProviderCatalogItem['checkoutMode'];
+type ProviderName = CustomerProviderCatalogItem['name'];
 
 const IN_PROGRESS_RETRIES = 2;
 const IN_PROGRESS_DELAY_MS = 1500;
@@ -34,7 +38,7 @@ const IN_PROGRESS_DELAY_MS = 1500;
  * payment step.
  */
 function checkoutModeOf(data: CheckoutStartResponse, provider: CustomerProviderCatalogItem | undefined): CheckoutMode {
-	if ((data.provider as string) === 'no_payment_required') return 'none';
+	if (data.provider === 'no_payment_required') return 'none';
 	if (provider) return provider.checkoutMode;
 	if (data.redirectUrl) return 'redirect';
 	return data.clientSecret ? 'internal' : 'manual';
@@ -65,7 +69,7 @@ interface CheckoutContextValue {
 
 	// Payment
 	providers: CustomerProviderCatalogItem[];
-	selectedProvider: string | null;
+	selectedProvider: ProviderName | null;
 	paymentData: CheckoutStartResponse | null;
 
 	// Cart info
@@ -80,7 +84,7 @@ interface CheckoutContextValue {
 	setError: (error: string | null) => void;
 	handleSaveCustomer: (e: React.FormEvent) => Promise<void>;
 	handleSaveAnswers: (e: React.FormEvent) => Promise<void>;
-	handleStartCheckout: (providerName: string) => Promise<void>;
+	handleStartCheckout: (providerName: ProviderName) => Promise<void>;
 	handleSubmitCheckout: (stripePaymentIntentId?: string) => Promise<void>;
 	restartBooking: () => void;
 	extendCart: () => void;
@@ -125,7 +129,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	const [answers, setAnswers] = useState<Record<string, string>>({});
 
 	// Payment
-	const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+	const [selectedProvider, setSelectedProvider] = useState<ProviderName | null>(null);
 	const [paymentData, setPaymentData] = useState<CheckoutStartResponse | null>(null);
 
 	// Redirect if no cart — but only once CartProvider has read the stored cart id
@@ -153,7 +157,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			setSubmitting(true);
 
 			try {
-				const customerPayload = customerId
+				const customerPayload: CheckoutCustomer = customerId
 					? { customer: { kind: 'existing', customerId } }
 					: { customer: { kind: 'new', email, firstName: firstName || undefined, lastName: lastName || undefined } };
 
@@ -202,10 +206,11 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 						answer: answers[q.id] as string,
 					}));
 
+				const answersPayload: CheckoutQuestionAnswers = { answers: answerArray };
 				const res = await fetch('/api/checkout/save-answers', {
 					method: 'POST',
 					headers: cartHeaders(),
-					body: JSON.stringify({ answers: answerArray }),
+					body: JSON.stringify(answersPayload),
 				});
 
 				if (!res.ok && res.status !== 204) {
@@ -298,13 +303,13 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 
 	// Step 3: Start checkout with selected provider
 	const handleStartCheckout = useCallback(
-		async (providerName: string) => {
+		async (providerName: ProviderName) => {
 			setError(null);
 			setSubmitting(true);
 			setSelectedProvider(providerName);
 
 			try {
-				const startPayload: Record<string, unknown> = { provider: providerName };
+				const startPayload: StartCheckout = { provider: providerName };
 				if (customerId) {
 					startPayload.customer = { kind: 'existing', customerId };
 				}
