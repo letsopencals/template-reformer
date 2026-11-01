@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import useSWR from 'swr';
 import { useSession } from 'next-auth/react';
 import type { OrderDetailResponse } from '@opencals/storefront-sdk';
@@ -13,6 +13,10 @@ import { OrderSummary } from '@/components/confirmation/order-summary';
 import { PassSkeleton } from '@/components/confirmation/pass-skeleton';
 import { SignInPrompt } from '@/components/confirmation/sign-in-prompt';
 import { CalendarLinks } from '@/components/confirmation/calendar-links';
+import { PaymentInstructions } from '@/components/confirmation/payment-instructions';
+import { manualProviderOf } from '@/components/confirmation/order-summary';
+import { readHandoff, type ConfirmationHandoff } from '@/lib/confirmation-handoff';
+import { strongestReason } from '@/lib/booking-status';
 
 const SWR_OPTS = { revalidateOnFocus: false, errorRetryCount: 2 } as const;
 
@@ -38,10 +42,25 @@ export function ThankYouView({ orderId }: { orderId: string | null }) {
 	const loading = status === 'loading' || isLoading;
 	const email = order?.customerEmail ?? order?.customer?.email ?? null;
 
+	// What submit handed over in this tab (bank details, invoice link, waiting or not).
+	const [handoff, setHandoff] = useState<ConfirmationHandoff | null>(null);
+	useEffect(() => {
+		setHandoff(orderId ? readHandoff(orderId) : null);
+	}, [orderId]);
+
+	// The loaded order is fresher than the hand-off (a booking may have been confirmed meanwhile).
+	const pendingReason = views.length ? strongestReason(views.map((v) => v.pendingReason)) : (handoff?.pendingReason ?? null);
+	const instructions = handoff?.instructions ?? null;
+	const stillDue = Boolean(order && order.total > 0 && (order.paymentStatus === 'unpaid' || order.paymentStatus === 'partially-paid'));
+	const manual = order ? manualProviderOf(order) : null;
+	const emailFallback = stillDue && (manual === 'bank_transfer' || manual === 'stripe_invoice');
+	const dueAt = instructions?.dueAt ?? order?.paymentDueAt ?? null;
+	const showInstructions = stillDue || !order;
+
 	return (
 		<section className="pt-32 pb-24 lg:pt-40">
 			<div className="container-x">
-				<ConfirmationHero orderName={order?.name ?? null} email={email} count={views.length} />
+				<ConfirmationHero orderName={order?.name ?? handoff?.orderName ?? null} email={email} count={views.length} pendingReason={pendingReason} dueAt={dueAt} />
 
 				<div className="mt-14 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
 					<div className="space-y-8">
@@ -60,6 +79,7 @@ export function ThankYouView({ orderId }: { orderId: string | null }) {
 						)}
 					</div>
 					<aside className="space-y-6 lg:sticky lg:top-28 lg:self-start">
+						{showInstructions ? <PaymentInstructions instructions={instructions} orderName={order?.name ?? handoff?.orderName ?? null} emailFallback={emailFallback} /> : null}
 						{order ? <OrderSummary order={order} /> : null}
 						{views.length > 1 ? <CalendarLinks views={views} /> : null}
 					</aside>

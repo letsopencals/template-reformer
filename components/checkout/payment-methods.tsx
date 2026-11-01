@@ -9,7 +9,7 @@ import { Tag } from '@/components/ui/chip';
 import { PAYMENT_METHOD_FORM_ID } from './form-ids';
 
 /** Primary-action label for a chosen provider (used here and by the mobile pay bar). */
-export function methodActionLabel(name: string | undefined): string {
+export function methodActionLabel(name: string | undefined, mode?: CustomerProviderCatalogItem['checkoutMode']): string {
 	switch (name) {
 		case 'stripe':
 			return 'Continue to card';
@@ -17,10 +17,12 @@ export function methodActionLabel(name: string | undefined): string {
 			return 'Confirm, pay at the studio';
 		case 'bank_transfer':
 			return 'Confirm, pay by transfer';
+		case 'stripe_invoice':
+			return 'Confirm, pay by invoice';
 		case 'no_payment_required':
 			return 'Confirm booking';
 		default:
-			return 'Continue';
+			return mode === 'manual' || mode === 'none' ? 'Confirm booking' : 'Continue';
 	}
 }
 
@@ -36,6 +38,7 @@ interface PaymentMethodsProps {
  */
 export function PaymentMethods({ method, onMethodChange }: PaymentMethodsProps) {
 	const { providers, submitting, isExpired, handleStartCheckout } = useCheckout();
+	const chosen = providers.find((p) => p.name === method);
 
 	const onSubmit = (e: FormEvent) => {
 		e.preventDefault();
@@ -64,7 +67,7 @@ export function PaymentMethods({ method, onMethodChange }: PaymentMethodsProps) 
 				</div>
 			</fieldset>
 			<Button type="submit" variant="primary" size="lg" className="max-lg:hidden" disabled={!method || submitting || isExpired}>
-				{submitting ? 'One moment…' : methodActionLabel(method)}
+				{submitting ? 'One moment…' : methodActionLabel(method, chosen?.checkoutMode)}
 				{submitting ? null : <span aria-hidden>→</span>}
 			</Button>
 		</form>
@@ -117,7 +120,7 @@ function MethodCard({ provider, index, checked, disabled, onSelect }: MethodCard
 						<Tag tone="yellow" className="ml-auto">Test mode</Tag>
 					) : null}
 				</span>
-				<span className="mt-1.5 block text-sm leading-relaxed text-graphite">{customerCopy(provider.name) ?? provider.description}</span>
+				<span className="mt-1.5 block text-sm leading-relaxed text-graphite">{customerCopy(provider)}</span>
 			</span>
 		</label>
 	);
@@ -136,20 +139,30 @@ function customerTitle(name: string): string | undefined {
 			return 'Pay at the studio';
 		case 'bank_transfer':
 			return 'Bank transfer';
+		case 'stripe_invoice':
+			return 'Pay by invoice';
+		case 'no_payment_required':
+			return 'Nothing to pay';
 		default:
 			return undefined;
 	}
 }
 
-function customerCopy(name: string): string | undefined {
-	switch (name) {
+function customerCopy(provider: CustomerProviderCatalogItem): string {
+	switch (provider.name) {
 		case 'stripe':
 			return 'Card, Apple Pay or Google Pay, paid now.';
 		case 'cash':
 			return 'Your bed is held now; pay at the front desk when you arrive.';
 		case 'bank_transfer':
-			return 'We’ll email the transfer details with your confirmation.';
+			return 'Your bed is held now; the transfer details follow on the next page and by email.';
+		case 'stripe_invoice':
+			return 'Your bed is held now; we email an invoice you pay online by its due date.';
+		case 'no_payment_required':
+			return 'This booking is covered. Confirm it and you’re on the reformer.';
 		default:
-			return undefined;
+			return provider.checkoutMode === 'internal' || provider.checkoutMode === 'redirect'
+				? 'Pay online now.'
+				: 'Confirm now; the studio tells you how to pay.';
 	}
 }

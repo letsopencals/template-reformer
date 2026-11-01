@@ -1,6 +1,7 @@
 import { getBookingMeta, type AppointmentLike, type BookingMeta } from '@/lib/booking-meta';
 import { springFromColor } from '@/lib/catalog';
 import { localParts } from '@/lib/timetable';
+import { pendingReasonOf, type PendingReason } from '@/lib/booking-status';
 import {
 	classMeta,
 	privateRoomFor,
@@ -24,6 +25,9 @@ import {
 export interface BookingAppt extends AppointmentLike {
 	id: string;
 	status?: string | null;
+	pendingReason?: string | null;
+	/** Null while the appointment is only a cart hold (no order yet). */
+	orderLineItem?: unknown;
 	productId?: string | null;
 	staffMemberId?: string | null;
 	locationId?: string | null;
@@ -43,6 +47,10 @@ export interface BookingAppt extends AppointmentLike {
 export interface BookingView extends BookingMeta {
 	id: string;
 	status: string;
+	/** Set only while the booking waits (pending with a reason); null = confirmed. */
+	pendingReason: PendingReason | null;
+	/** A pending appointment with no order is a cart hold, not a booking. */
+	isHold: boolean;
 	/** Epoch ms. */
 	start: number;
 	end: number;
@@ -105,6 +113,8 @@ export function toBookingView(appt: BookingAppt): BookingView {
 		...meta,
 		id: appt.id,
 		status: appt.status ?? 'scheduled',
+		pendingReason: pendingReasonOf(appt),
+		isHold: appt.status === 'pending' && appt.orderLineItem === null,
 		start,
 		end,
 		startIso: appt.from,

@@ -208,6 +208,14 @@ RSC and client) rather than hand-writing query strings.
 - **SDK 0.3.18:** `checkout/submit` returns `auth` only for a trusted
   customer. Without it, the confirmation page must say "sign in with a code to
   see this booking in your account" rather than assume a session.
+- **SDK 0.4.0 checkout:** start routes on the provider's `checkoutMode`
+  (`internal` → Stripe step; `manual`/`none` → submit straight away; unknown
+  providers use the API's `displayName`). Submit's `paymentInstructions` and
+  the booking's waiting reason ride to `/thank-you` via sessionStorage
+  (`lib/confirmation-handoff.ts`). A booking waits only when `pending` WITH a
+  `pendingReason` (`lib/booking-status.ts`); pending with no reason is an
+  automatic store still confirming and reads as Booked. 409/402 checkout codes
+  are handled in `contexts/checkout-context.tsx` (`lib/checkout-error.ts`).
 - Policies: 12 h cancel/reschedule (`cancelGap` 43200 s; copy via
   `lib/policy.ts` `formatGap`), 21-day booking window
   (`siteConfig.policies.bookingWindowDays`).

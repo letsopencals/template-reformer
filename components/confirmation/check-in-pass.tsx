@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import { SpringChip } from '@/components/motifs/spring-chip';
 import { Tag } from '@/components/ui/chip';
+import { pendingTag } from '@/lib/booking-status';
 import { classMeta } from '@/lib/site-config';
 import type { BookingView } from '@/components/account/booking-view';
 import { Countdown } from '@/components/confirmation/countdown';
@@ -37,7 +38,13 @@ export function CheckInPass({ view, index = 0, total = 1, showNextWeek = true, c
 						<p className="eyebrow text-steel">
 							Check-in pass{total > 1 ? ` · Nº ${pad(index + 1)} / ${pad(total)}` : ''}
 						</p>
-						{cancelled ? <Tag tone="red">Cancelled</Tag> : <Tag tone="ink">{view.kindLabel}</Tag>}
+						{cancelled ? (
+							<Tag tone="red">Cancelled</Tag>
+						) : view.pendingReason ? (
+							<Tag tone="yellow">{pendingTag(view.pendingReason)}</Tag>
+						) : (
+							<Tag tone="ink">{view.kindLabel}</Tag>
+						)}
 					</div>
 
 					<p className={clsx('tabular mt-6 text-[clamp(3.6rem,13vw,6.75rem)] leading-[0.9] font-medium tracking-[-0.05em] text-ink', cancelled && 'text-steel line-through decoration-2')}>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { SpringChip } from '@/components/motifs/spring-chip';
 import { Tag } from '@/components/ui/chip';
 import { classMeta } from '@/lib/site-config';
+import { pendingTag } from '@/lib/booking-status';
 import type { BookingView } from '@/components/account/booking-view';
 import { BookingActions } from '@/components/account/booking-actions';
 import { JoinButton } from '@/components/account/join-button';
@@ -28,6 +29,7 @@ export function BookingCard({ view, onChanged }: { view: BookingView; onChanged:
 					<SpringChip spring={view.spring} />
 					{level ? <span className="eyebrow text-steel">{level}</span> : null}
 					{view.people > 1 ? <Tag tone="outline">Duet · {view.people} people</Tag> : null}
+					{view.pendingReason ? <Tag tone="yellow">{pendingTag(view.pendingReason)}</Tag> : null}
 				</div>
 				<h3 className="headline mt-2 text-lg leading-snug">
 					<Link href={`/account/appointments/${view.id}`} className="link-underline text-ink">

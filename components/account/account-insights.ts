@@ -7,7 +7,11 @@ import type { BookingView } from '@/components/account/booking-view';
  * the level-path sentence and the studios a customer has been to.
  */
 
-/** Upcoming = scheduled and not yet ended (soonest first). Past = ended, not cancelled (latest first). */
+/**
+ * Upcoming = scheduled or pending (waiting for payment or the studio) and not yet ended, soonest
+ * first. A pending appointment without an order is a cart hold and is skipped. Past = ended, not
+ * cancelled (latest first).
+ */
 export function splitBookings(views: BookingView[], now: number): { upcoming: BookingView[]; past: BookingView[]; cancelled: BookingView[] } {
 	const upcoming: BookingView[] = [];
 	const past: BookingView[] = [];
@@ -15,7 +19,7 @@ export function splitBookings(views: BookingView[], now: number): { upcoming: Bo
 	for (const v of views) {
 		if (v.status === 'canceled') cancelled.push(v);
 		else if (v.status === 'completed' || v.end <= now) past.push(v);
-		else if (v.status === 'scheduled') upcoming.push(v);
+		else if (v.status === 'scheduled' || (v.status === 'pending' && !v.isHold)) upcoming.push(v);
 	}
 	upcoming.sort((a, b) => a.start - b.start);
 	past.sort((a, b) => b.start - a.start);

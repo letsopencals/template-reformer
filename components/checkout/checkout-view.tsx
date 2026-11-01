@@ -103,9 +103,11 @@ function CheckoutBody() {
 		providers,
 		selectedProvider,
 		isExpired,
+		holdLost,
+		paymentData,
 		setStep,
 		setError,
-		handleSubmitCheckout,
+		restartBooking,
 	} = useCheckout();
 	const lenis = useSmoothScroll();
 
@@ -144,10 +146,11 @@ function CheckoutBody() {
 		hasEmail: Boolean(email),
 		hasProviders: providers.length > 0,
 		method,
+		methodMode: providers.find((p) => p.name === method)?.checkoutMode,
 		selectedProvider,
+		selectedIsCard: Boolean(paymentData?.clientSecret) && providers.find((p) => p.name === selectedProvider)?.checkoutMode === 'internal',
 		stripeProcessing,
 		total,
-		onConfirmCash: () => void handleSubmitCheckout(),
 	});
 
 	return (
@@ -162,13 +165,23 @@ function CheckoutBody() {
 						{error ? (
 							<div role="alert" className="mt-8 flex items-start gap-4 border-l-2 border-spring-red bg-spring-red-soft/60 px-5 py-4 text-sm text-ink">
 								<p className="flex-1">{error}</p>
-								<button
-									type="button"
-									onClick={() => setError(null)}
-									className="eyebrow shrink-0 text-[0.6rem] text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ink"
-								>
-									Dismiss
-								</button>
+								{holdLost ? (
+									<button
+										type="button"
+										onClick={restartBooking}
+										className="eyebrow shrink-0 text-[0.6rem] text-ink underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-ink"
+									>
+										Pick a time
+									</button>
+								) : (
+									<button
+										type="button"
+										onClick={() => setError(null)}
+										className="eyebrow shrink-0 text-[0.6rem] text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-ink"
+									>
+										Dismiss
+									</button>
+								)}
 							</div>
 						) : null}
 

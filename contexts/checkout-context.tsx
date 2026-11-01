@@ -7,9 +7,12 @@ import { useSession } from 'next-auth/react';
 import { useCart } from '@/contexts/cart-context';
 import { usePaymentProviders } from '@/hooks/use-payment-providers';
 import { useCheckoutQuestions } from '@/hooks/use-checkout-questions';
+import { CheckoutError, checkoutErrorCopy, checkoutErrorFrom } from '@/lib/checkout-error';
+import { saveHandoff } from '@/lib/confirmation-handoff';
 import type {
 	CustomerProviderCatalogItem,
 	CheckoutStartResponse,
+	CheckoutResponse,
 	SubmitCheckout,
 	CartItem,
 	CheckoutQuestionResponse as CheckoutQuestion,
@@ -17,12 +20,24 @@ import type {
 
 export type CheckoutStep = 'customer' | 'questions' | 'payment-select' | 'payment';
 
-// The backend can override the requested provider with the "no payment required" fallback when nothing
-// is collectible. This template's pinned SDK union predates that value, so accept a widened string here
-// (no `as` assertion; SDK types stay authoritative) and compare against the known fallback name.
-const NO_PAYMENT_REQUIRED_PROVIDER = 'no_payment_required';
-function isNoPaymentRequired(provider: string): boolean {
-	return provider === NO_PAYMENT_REQUIRED_PROVIDER;
+type CheckoutMode = CustomerProviderCatalogItem['checkoutMode'];
+
+const IN_PROGRESS_RETRIES = 2;
+const IN_PROGRESS_DELAY_MS = 1500;
+
+/**
+ * How the started checkout continues: `internal` (card form here), `redirect`
+ * (hosted page), `manual` (cash, bank transfer, invoice) or `none` (nothing to
+ * pay). From the provider's catalog entry; the "no payment required" fallback
+ * the backend may swap in is `none`. An unknown provider without a card
+ * session is treated as manual, so it never strands the visitor on an empty
+ * payment step.
+ */
+function checkoutModeOf(data: CheckoutStartResponse, provider: CustomerProviderCatalogItem | undefined): CheckoutMode {
+	if ((data.provider as string) === 'no_payment_required') return 'none';
+	if (provider) return provider.checkoutMode;
+	if (data.redirectUrl) return 'redirect';
+	return data.clientSecret ? 'internal' : 'manual';
 }
 
 interface CheckoutContextValue {
@@ -31,6 +46,8 @@ interface CheckoutContextValue {
 	error: string | null;
 	submitting: boolean;
 	checkoutComplete: boolean;
+	/** A held bed was taken while checking out (409 CART_EXPIRED): offer a fresh start. */
+	holdLost: boolean;
 
 	// Customer
 	email: string;
@@ -65,6 +82,7 @@ interface CheckoutContextValue {
 	handleSaveAnswers: (e: React.FormEvent) => Promise<void>;
 	handleStartCheckout: (providerName: string) => Promise<void>;
 	handleSubmitCheckout: (stripePaymentIntentId?: string) => Promise<void>;
+	restartBooking: () => void;
 	extendCart: () => void;
 }
 
@@ -79,6 +97,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	const [error, setError] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 	const [checkoutComplete, setCheckoutComplete] = useState(false);
+	const [holdLost, setHoldLost] = useState(false);
 
 	// Customer info
 	const [email, setEmail] = useState('');
@@ -203,6 +222,80 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 		[answers, questions, cartHeaders],
 	);
 
+	// A failed start/submit: recover from the conflicts the API names, else show its message.
+	const handleCheckoutFailure = useCallback(
+		(err: unknown) => {
+			if (err instanceof CheckoutError) {
+				if (err.code === 'CART_ALREADY_CHECKED_OUT') {
+					// The cart is already an order (a second tab, a retried click): show that order.
+					setCheckoutComplete(true);
+					clearCart();
+					router.push(err.orderId ? `/thank-you?orderId=${encodeURIComponent(err.orderId)}` : '/thank-you');
+					return;
+				}
+				if (err.code === 'CART_EXPIRED') setHoldLost(true);
+				setError(checkoutErrorCopy(err) ?? err.message);
+				return;
+			}
+			setError(err instanceof Error ? err.message : 'An error occurred');
+		},
+		[clearCart, router],
+	);
+
+	// POST to a checkout route. Another start/submit of this cart still running answers 409
+	// CHECKOUT_IN_PROGRESS: wait a moment and try again (twice) before giving up.
+	const postCheckout = useCallback(
+		async (url: string, body: unknown, fallback: string) => {
+			for (let attempt = 0; ; attempt++) {
+				const res = await fetch(url, { method: 'POST', headers: cartHeaders(), body: JSON.stringify(body) });
+				if (res.ok) return res.json();
+				const err = await checkoutErrorFrom(res, fallback);
+				if (err.code !== 'CHECKOUT_IN_PROGRESS' || attempt >= IN_PROGRESS_RETRIES) throw err;
+				await new Promise((r) => setTimeout(r, IN_PROGRESS_DELAY_MS));
+			}
+		},
+		[cartHeaders],
+	);
+
+	// Step 4: Submit checkout
+	const handleSubmitCheckout = useCallback(
+		async (stripePaymentIntentId?: string) => {
+			setError(null);
+			setSubmitting(true);
+
+			try {
+				const submitPayload: SubmitCheckout = {
+					appointmentsSettings: { markAsScheduled: true },
+				};
+				if (stripePaymentIntentId) {
+					submitPayload.stripePaymentIntentId = stripePaymentIntentId;
+				}
+
+				const data: CheckoutResponse = await postCheckout('/api/checkout/submit', submitPayload, 'Checkout failed');
+
+				// Auto-authenticate customer if tokens returned
+				if (data.auth?.accessToken) {
+					await nextAuthSignIn('checkout-token', {
+						accessToken: data.auth.accessToken,
+						refreshToken: data.auth.refreshToken,
+						redirect: false,
+					});
+				}
+
+				// Bank details / invoice link and the booking's status ride to the confirmation page.
+				saveHandoff(data);
+				setCheckoutComplete(true);
+				clearCart();
+				router.push(`/thank-you?orderId=${encodeURIComponent(data.order?.id ?? '')}`);
+			} catch (err: unknown) {
+				handleCheckoutFailure(err);
+			} finally {
+				setSubmitting(false);
+			}
+		},
+		[postCheckout, clearCart, router, handleCheckoutFailure],
+	);
+
 	// Step 3: Start checkout with selected provider
 	const handleStartCheckout = useCallback(
 		async (providerName: string) => {
@@ -216,84 +309,36 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 					startPayload.customer = { kind: 'existing', customerId };
 				}
 
-				const res = await fetch('/api/checkout/start', {
-					method: 'POST',
-					headers: cartHeaders(),
-					body: JSON.stringify(startPayload),
-				});
-
-				if (!res.ok) {
-					const data = await res.json();
-					throw new Error(data.error || 'Failed to start checkout');
-				}
-
-				const data: CheckoutStartResponse = await res.json();
+				const data: CheckoutStartResponse = await postCheckout('/api/checkout/start', startPayload, 'Failed to start checkout');
 				setPaymentData(data);
 
-				// Key off the RESPONSE provider: when nothing is collectible the backend overrides the
-				// requested provider (e.g. Stripe) with "no payment required" — confirm it immediately, like cash.
-				if (providerName === 'cash' || isNoPaymentRequired(data.provider)) {
+				// Route on how the provider checks out, keyed off the RESPONSE provider: when nothing is
+				// collectible the backend swaps the requested one (e.g. Stripe) for "no payment required".
+				const mode = checkoutModeOf(data, providers.find((p) => p.name === data.provider) ?? providers.find((p) => p.name === providerName));
+				if (mode === 'manual' || mode === 'none') {
+					// Cash, bank transfer, invoice, nothing to pay: no card form, place the booking now.
+					setSubmitting(false);
 					await handleSubmitCheckout();
-				} else if (data.redirectUrl) {
+				} else if (mode === 'redirect' && data.redirectUrl) {
 					window.location.href = data.redirectUrl;
 				} else {
 					setStep('payment');
 				}
 			} catch (err: unknown) {
-				setError(err instanceof Error ? err.message : 'An error occurred');
+				handleCheckoutFailure(err);
+			} finally {
 				setSubmitting(false);
 			}
 		},
-		[cartHeaders, customerId], // eslint-disable-line react-hooks/exhaustive-deps
+		[customerId, providers, postCheckout, handleSubmitCheckout, handleCheckoutFailure],
 	);
 
-	// Step 4: Submit checkout
-	const handleSubmitCheckout = useCallback(
-		async (stripePaymentIntentId?: string) => {
-			setError(null);
-			setSubmitting(true);
-
-			try {
-				const submitPayload: SubmitCheckout = {
-					appointmentsSettings: { markAsScheduled: true },
-				};
-
-				if (stripePaymentIntentId) {
-					submitPayload.stripePaymentIntentId = stripePaymentIntentId;
-				}
-
-				const res = await fetch('/api/checkout/submit', {
-					method: 'POST',
-					headers: cartHeaders(),
-					body: JSON.stringify(submitPayload),
-				});
-
-				if (!res.ok) {
-					const data = await res.json();
-					throw new Error(data.error || 'Checkout failed');
-				}
-
-				const data = await res.json();
-
-				// Auto-authenticate customer if tokens returned
-				if (data.auth?.accessToken) {
-					await nextAuthSignIn('checkout-token', {
-						accessToken: data.auth.accessToken,
-						refreshToken: data.auth.refreshToken,
-						redirect: false,
-					});
-				}
-
-				setCheckoutComplete(true);
-				clearCart();
-				router.push(`/thank-you?orderId=${data.order?.id ?? ''}`);
-			} catch (err: unknown) {
-				setError(err instanceof Error ? err.message : 'An error occurred');
-				setSubmitting(false);
-			}
-		},
-		[cartHeaders, clearCart, router],
-	);
+	// After a lost hold: drop the cart; the no-cart redirect takes the visitor back to the timetable.
+	const restartBooking = useCallback(() => {
+		setHoldLost(false);
+		setError(null);
+		clearCart();
+	}, [clearCart]);
 
 	const items = useMemo(() => (cart?.items ?? []) as CartItem[], [cart?.items]);
 	const isExpired = timeRemaining !== null && timeRemaining <= 0;
@@ -308,6 +353,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			error,
 			submitting,
 			checkoutComplete,
+			holdLost,
 			email,
 			firstName,
 			lastName,
@@ -332,6 +378,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			handleSaveAnswers,
 			handleStartCheckout,
 			handleSubmitCheckout,
+			restartBooking,
 			extendCart,
 		}),
 		[
@@ -339,6 +386,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			error,
 			submitting,
 			checkoutComplete,
+			holdLost,
 			email,
 			firstName,
 			lastName,
@@ -357,6 +405,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			handleSaveAnswers,
 			handleStartCheckout,
 			handleSubmitCheckout,
+			restartBooking,
 			extendCart,
 		],
 	);

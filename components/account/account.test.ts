@@ -83,6 +83,17 @@ describe('account insights', () => {
 		expect(s.cancelled.map((v) => v.id)).toEqual(['c']);
 	});
 
+	it('keeps pending bookings in upcoming, skips cart holds', () => {
+		const waiting = toBookingView(appt({ id: 'w', status: 'pending', pendingReason: 'awaiting_payment', orderLineItem: { id: 'li' } }));
+		const settling = toBookingView(appt({ id: 's', status: 'pending', pendingReason: null, orderLineItem: { id: 'li2' } }));
+		const hold = toBookingView(appt({ id: 'h', status: 'pending', orderLineItem: null }));
+		const s = splitBookings([waiting, settling, hold, next], now);
+		expect(s.upcoming.map((v) => v.id).sort()).toEqual(['n', 's', 'w']);
+		expect(waiting.pendingReason).toBe('awaiting_payment');
+		// Pending with no reason is an automatic store still confirming: it reads as confirmed.
+		expect(settling.pendingReason).toBeNull();
+	});
+
 	it('counts studios visited', () => {
 		const kb = toBookingView(appt({ id: 'k', location: { slug: 'tensile-kreuzberg', title: 'Tensile Kreuzberg', type: 'physical' } }));
 		expect(studiosVisited([past, past, kb])).toEqual([

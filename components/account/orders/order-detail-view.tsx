@@ -7,6 +7,7 @@ import type { OrderDetailResponse } from '@opencals/storefront-sdk';
 import { fetcher } from '@/lib/fetcher';
 import { SpringCoil } from '@/components/motifs/spring-chip';
 import { Tag } from '@/components/ui/chip';
+import { pendingTag } from '@/lib/booking-status';
 import { AccountHeading } from '@/components/account/account-heading';
 import { AccountError, AccountLoading } from '@/components/account/account-states';
 import { dayLabel, toBookingView } from '@/components/account/booking-view';
@@ -27,7 +28,7 @@ export function OrderDetailView({ id }: { id: string }) {
 				.sort((a, b) => a.start - b.start),
 		[order],
 	);
-	const upcoming = views.filter((v) => v.status === 'scheduled');
+	const upcoming = views.filter((v) => v.status === 'scheduled' || v.status === 'pending');
 
 	return (
 		<div className="container-x">
@@ -68,7 +69,13 @@ export function OrderDetailView({ id }: { id: string }) {
 												{v.teacher ? ` · ${v.teacher}` : ''}
 											</span>
 										</span>
-										{v.status === 'canceled' ? <Tag tone="red">Cancelled</Tag> : <span aria-hidden>→</span>}
+										{v.status === 'canceled' ? (
+											<Tag tone="red">Cancelled</Tag>
+										) : v.pendingReason ? (
+											<Tag tone="yellow">{pendingTag(v.pendingReason)}</Tag>
+										) : (
+											<span aria-hidden>→</span>
+										)}
 									</Link>
 								</li>
 							))}

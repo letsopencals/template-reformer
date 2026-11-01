@@ -8,15 +8,33 @@ type OrderLike = Pick<
 	'name' | 'paymentCurrencyCode' | 'subtotal' | 'total' | 'totalTax' | 'taxesIncluded' | 'isFullyPaid' | 'paymentStatus' | 'dueToPay' | 'refundedTotal' | 'lineItems' | 'transactions'
 >;
 
-/** "Paid", "Pay at the studio"… from the order's own fields. */
-export function paymentLabel(
-	order: Pick<OrderLike, 'total' | 'isFullyPaid' | 'paymentStatus'> & { transactions?: { provider?: string | null; gateway?: string | null }[] | null },
-): string {
+type Tx = { provider?: string | null; gateway?: string | null };
+
+/** The manual method an unpaid order is waiting on (cash, bank transfer, invoice), if any. */
+export function manualProviderOf(order: { transactions?: Tx[] | null }): string | null {
+	for (const t of order.transactions ?? []) {
+		const p = t.provider ?? t.gateway;
+		if (p === 'cash' || p === 'bank_transfer' || p === 'stripe_invoice') return p;
+	}
+	return null;
+}
+
+/** "Paid", "Pay at the studio"… from the order's own fields. Never blank, never a raw status. */
+export function paymentLabel(order: Pick<OrderLike, 'total' | 'isFullyPaid' | 'paymentStatus'> & { transactions?: Tx[] | null }): string {
+	if (order.paymentStatus === 'voided') return 'Cancelled — not charged';
 	if (!order.total) return 'Nothing to pay';
-	if (order.isFullyPaid) return 'Paid';
+	if (order.isFullyPaid || order.paymentStatus === 'paid') return 'Paid';
 	if (order.paymentStatus === 'partially-paid') return 'Part paid';
-	const cash = (order.transactions ?? []).some((t) => t.provider === 'cash' || t.gateway === 'cash');
-	return cash ? 'Pay at the studio' : 'Payment due';
+	switch (manualProviderOf(order)) {
+		case 'cash':
+			return 'Pay at the studio';
+		case 'bank_transfer':
+			return 'Bank transfer due';
+		case 'stripe_invoice':
+			return 'Invoice due';
+		default:
+			return 'Payment due';
+	}
 }
 
 /** Order totals card: each line, add-ons, savings, tax, total and payment status. */

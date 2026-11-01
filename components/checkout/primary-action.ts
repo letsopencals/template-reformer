@@ -1,3 +1,4 @@
+import type { CustomerProviderCatalogItem } from '@opencals/storefront-sdk';
 import type { CheckoutStep } from '@/contexts/checkout-context';
 import { methodActionLabel } from './payment-methods';
 import type { PrimaryAction } from './pay-bar';
@@ -10,10 +11,13 @@ export interface ActionInput {
 	hasEmail: boolean;
 	hasProviders: boolean;
 	method: string | undefined;
+	/** How the chosen method checks out (catalog `checkoutMode`). */
+	methodMode: CustomerProviderCatalogItem['checkoutMode'] | undefined;
 	selectedProvider: string | null;
+	/** The started checkout shows a card form. */
+	selectedIsCard: boolean;
 	stripeProcessing: boolean;
 	total: string;
-	onConfirmCash: () => void;
 }
 
 /** What the mobile pay bar does at each step — mirrors the section's own submit button. */
@@ -27,18 +31,16 @@ export function primaryAction(i: ActionInput): PrimaryAction | null {
 		case 'payment-select':
 			if (!i.hasProviders) return null;
 			return {
-				label: i.submitting ? 'One moment…' : methodActionLabel(i.method),
+				label: i.submitting ? 'One moment…' : methodActionLabel(i.method, i.methodMode),
 				form: PAYMENT_METHOD_FORM_ID,
 				disabled: blocked || !i.method,
 				busy: i.submitting,
 			};
 		case 'payment':
-			if (i.selectedProvider === 'stripe') {
+			// Only card checkouts stop on this step; manual ones are placed straight after start.
+			if (i.selectedIsCard) {
 				const busy = i.stripeProcessing || i.submitting;
 				return { label: busy ? 'Processing…' : `Pay ${i.total}`, form: STRIPE_FORM_ID, disabled: busy || i.isExpired, busy };
-			}
-			if (i.selectedProvider === 'cash') {
-				return { label: i.submitting ? 'Confirming…' : 'Confirm booking', onClick: i.onConfirmCash, disabled: blocked, busy: i.submitting };
 			}
 			return null;
 	}
