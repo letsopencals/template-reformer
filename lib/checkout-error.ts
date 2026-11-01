@@ -1,4 +1,5 @@
 import type { CheckoutErrorCode, CheckoutErrorResponse } from '@opencals/storefront-sdk';
+import { readFieldErrors, type ApiFieldError } from '@/lib/field-errors';
 
 /** A failed `/api/checkout/*` response body: `error` is the message, the rest is the API's checkout error body. */
 type CheckoutErrorBody = { error?: string } & Partial<CheckoutErrorResponse>;
@@ -13,6 +14,8 @@ export class CheckoutError extends Error {
 	readonly code: CheckoutErrorCode | null;
 	readonly orderId: NonNullable<CheckoutErrorResponse['orderId']> | null;
 	readonly paymentStatus: NonNullable<CheckoutErrorResponse['paymentStatus']> | null;
+	/** The API's field validation errors, as `/api/*` passes them on. */
+	readonly fieldErrors: ApiFieldError[];
 
 	constructor(message: string, status: number, body: CheckoutErrorBody | null) {
 		super(message);
@@ -21,6 +24,7 @@ export class CheckoutError extends Error {
 		this.code = str(body?.code);
 		this.orderId = str(body?.orderId);
 		this.paymentStatus = str(body?.paymentStatus);
+		this.fieldErrors = readFieldErrors(body);
 	}
 }
 

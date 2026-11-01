@@ -1,11 +1,16 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useCheckout } from '@/contexts/checkout-context';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { FieldError, Input } from '@/components/ui/input';
+import { errorId, fieldAria } from '@/lib/field-errors';
 import { Field } from './field';
 import { DETAILS_FORM_ID } from './form-ids';
+
+/** Input ids of the details fields. */
+const INPUT_IDS = { email: 'checkout-email', firstName: 'checkout-first-name', lastName: 'checkout-last-name' } as const;
 
 /** 01 — Your details. Submits through the context's handleSaveCustomer. */
 export function CustomerStep() {
@@ -20,7 +25,18 @@ export function CustomerStep() {
 		submitting,
 		isExpired,
 		handleSaveCustomer,
+		fieldErrors: fe,
 	} = useCheckout();
+
+	// A submit came back with a field rejected: put the cursor in the first one (not while typing).
+	const wasSubmitting = useRef(false);
+	useEffect(() => {
+		if (wasSubmitting.current && !submitting) {
+			const first = (['email', 'firstName', 'lastName'] as const).find((f) => fe[f]?.length);
+			if (first) document.getElementById(INPUT_IDS[first])?.focus();
+		}
+		wasSubmitting.current = submitting;
+	}, [submitting, fe]);
 
 	return (
 		<form id={DETAILS_FORM_ID} onSubmit={handleSaveCustomer} className="space-y-6">
@@ -42,7 +58,9 @@ export function CustomerStep() {
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 					placeholder="you@example.de"
+					{...fieldAria(INPUT_IDS.email, fe.email)}
 				/>
+				<FieldError id={errorId(INPUT_IDS.email)} messages={fe.email} />
 			</Field>
 			<div className="grid gap-6 sm:grid-cols-2">
 				<Field htmlFor="checkout-first-name" label="First name">
@@ -53,7 +71,9 @@ export function CustomerStep() {
 						value={firstName}
 						onChange={(e) => setFirstName(e.target.value)}
 						placeholder="Lea"
+						{...fieldAria(INPUT_IDS.firstName, fe.firstName)}
 					/>
+					<FieldError id={errorId(INPUT_IDS.firstName)} messages={fe.firstName} />
 				</Field>
 				<Field htmlFor="checkout-last-name" label="Last name">
 					<Input
@@ -63,7 +83,9 @@ export function CustomerStep() {
 						value={lastName}
 						onChange={(e) => setLastName(e.target.value)}
 						placeholder="Schneider"
+						{...fieldAria(INPUT_IDS.lastName, fe.lastName)}
 					/>
+					<FieldError id={errorId(INPUT_IDS.lastName)} messages={fe.lastName} />
 				</Field>
 			</div>
 			<p className="text-xs leading-relaxed text-graphite">

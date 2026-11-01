@@ -44,3 +44,13 @@ export function FieldLabel({ htmlFor, children, required, className }: { htmlFor
 		</label>
 	);
 }
+
+/** The API's (or the form's own) messages for one field, right under it. `id` is what the input's aria-describedby points at. */
+export function FieldError({ id, messages }: { id: string; messages?: readonly string[] }) {
+	if (!messages?.length) return null;
+	return (
+		<p id={id} className="mt-2 text-xs leading-relaxed text-spring-red">
+			{messages.join(' ')}
+		</p>
+	);
+}

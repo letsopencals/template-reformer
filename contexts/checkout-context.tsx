@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/cart-context';
 import { usePaymentProviders } from '@/hooks/use-payment-providers';
 import { useCheckoutQuestions } from '@/hooks/use-checkout-questions';
 import { CheckoutError, checkoutErrorCopy, checkoutErrorFrom } from '@/lib/checkout-error';
+import { bannerMessage, hasFieldErrors, mapFieldErrors, type FieldErrors } from '@/lib/field-errors';
 import { saveHandoff } from '@/lib/confirmation-handoff';
 import type {
 	CustomerProviderCatalogItem,
@@ -23,6 +24,10 @@ import type {
 } from '@opencals/storefront-sdk';
 
 export type CheckoutStep = 'customer' | 'questions' | 'payment-select' | 'payment';
+
+/** The "Your details" fields, by their path in the customer payload (the API's `customer.email` is `email`). */
+export type CustomerField = 'email' | 'firstName' | 'lastName';
+const CUSTOMER_FIELDS: readonly CustomerField[] = ['email', 'firstName', 'lastName'];
 
 type CheckoutMode = CustomerProviderCatalogItem['checkoutMode'];
 
@@ -58,6 +63,8 @@ interface CheckoutContextValue {
 	firstName: string;
 	lastName: string;
 	customerId: string | null;
+	/** The API's messages for the "Your details" fields, shown under each one; a field's clear when it's edited. */
+	fieldErrors: FieldErrors<CustomerField>;
 	setEmail: (v: string) => void;
 	setFirstName: (v: string) => void;
 	setLastName: (v: string) => void;
@@ -102,11 +109,35 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	const [submitting, setSubmitting] = useState(false);
 	const [checkoutComplete, setCheckoutComplete] = useState(false);
 	const [holdLost, setHoldLost] = useState(false);
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors<CustomerField>>({});
 
 	// Customer info
-	const [email, setEmail] = useState('');
-	const [firstName, setFirstName] = useState('');
-	const [lastName, setLastName] = useState('');
+	const [email, setEmailValue] = useState('');
+	const [firstName, setFirstNameValue] = useState('');
+	const [lastName, setLastNameValue] = useState('');
+	// Editing a field clears its error.
+	const clearFieldError = useCallback((field: CustomerField) => setFieldErrors((f) => (f[field] ? { ...f, [field]: undefined } : f)), []);
+	const setEmail = useCallback(
+		(v: string) => {
+			setEmailValue(v);
+			clearFieldError('email');
+		},
+		[clearFieldError],
+	);
+	const setFirstName = useCallback(
+		(v: string) => {
+			setFirstNameValue(v);
+			clearFieldError('firstName');
+		},
+		[clearFieldError],
+	);
+	const setLastName = useCallback(
+		(v: string) => {
+			setLastNameValue(v);
+			clearFieldError('lastName');
+		},
+		[clearFieldError],
+	);
 	const [customerId, setCustomerId] = useState<string | null>(null);
 	const [prefilled, setPrefilled] = useState(false);
 
@@ -114,9 +145,9 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		if (session?.customer && !prefilled) {
 			if (session.customer.id) setCustomerId(session.customer.id);
-			if (session.customer.email) setEmail(session.customer.email);
-			if (session.customer.firstName) setFirstName(session.customer.firstName);
-			if (session.customer.lastName) setLastName(session.customer.lastName);
+			if (session.customer.email) setEmailValue(session.customer.email);
+			if (session.customer.firstName) setFirstNameValue(session.customer.firstName);
+			if (session.customer.lastName) setLastNameValue(session.customer.lastName);
 			setPrefilled(true);
 		}
 	}, [session, prefilled]);
@@ -154,6 +185,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 		async (e: React.FormEvent) => {
 			e.preventDefault();
 			setError(null);
+			setFieldErrors({});
 			setSubmitting(true);
 
 			try {
@@ -168,8 +200,12 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 				});
 
 				if (!res.ok) {
-					const data = await res.json();
-					throw new Error(data.error || 'Failed to save customer info');
+					// The API's field errors go under the fields; only what no field shows reaches the banner.
+					const err = await checkoutErrorFrom(res, 'Failed to save customer info');
+					const { byField, unmapped } = mapFieldErrors(err.fieldErrors, CUSTOMER_FIELDS);
+					setFieldErrors(byField);
+					setError(bannerMessage(err.message, byField, unmapped, 'Failed to save customer info'));
+					return;
 				}
 
 				const saveResult = await res.json();
@@ -231,6 +267,14 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 	const handleCheckoutFailure = useCallback(
 		(err: unknown) => {
 			if (err instanceof CheckoutError) {
+				// A "Your details" field the API rejected: back to that step, the message under the field.
+				const { byField, unmapped } = mapFieldErrors(err.fieldErrors, CUSTOMER_FIELDS);
+				if (hasFieldErrors(byField)) {
+					setFieldErrors(byField);
+					setStep('customer');
+					setError(bannerMessage(err.message, byField, unmapped, 'Checkout failed'));
+					return;
+				}
 				if (err.code === 'CART_ALREADY_CHECKED_OUT') {
 					// The cart is already an order (a second tab, a retried click): show that order.
 					setCheckoutComplete(true);
@@ -359,6 +403,7 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			submitting,
 			checkoutComplete,
 			holdLost,
+			fieldErrors,
 			email,
 			firstName,
 			lastName,
@@ -392,10 +437,14 @@ export function CheckoutProvider({ children }: { children: ReactNode }) {
 			submitting,
 			checkoutComplete,
 			holdLost,
+			fieldErrors,
 			email,
 			firstName,
 			lastName,
 			customerId,
+			setEmail,
+			setFirstName,
+			setLastName,
 			questions,
 			answers,
 			providers,
